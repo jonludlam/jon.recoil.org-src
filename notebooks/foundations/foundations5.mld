@@ -1,0 +1,386 @@
+{0 Lecture 5: Sorting}
+
+{@meta hidden[{}]}
+
+A few applications for sorting and arranging items into order are:
+{ul {- search
+}{- merging
+}{- duplicates
+}{- inverting tables
+}{- graphics algorithms
+}}
+
+Sorting is perhaps the most deeply studied aspect of algorithm design.
+Knuth’s series {e The Art of Computer Programming} devotes an entire
+volume to sorting and searching!  {{: https://algs4.cs.princeton.edu/home/} Sedgewick}
+also covers sorting.  Sorting has countless applications.
+
+Sorting a collection allows items to be found quickly.  Recall that linear
+search requires $O(n)$ steps to search among $n$ items.  A sorted collection
+admits {e binary search} which requires only $O(\log n)$ time.  The idea
+of binary search is to compare the item being sought with the middle item (in
+position $n/2$) and then to discard either the left half or the right,
+depending on the result of the comparison.  Binary search needs arrays or
+trees, not lists; we shall come to binary search trees later.
+
+Two sorted files can quickly be {e merged} to form a larger sorted file.  Other
+applications include finding {e duplicates} that, after sorting, are adjacent.
+
+A telephone directory is sorted alphabetically by name.  The same information
+can instead be sorted by telephone number (useful to the police) or by street
+address (useful to junk-mail firms).  Sorting information in different ways
+gives it different applications.
+
+Common sorting algorithms include insertion sort, quicksort,
+mergesort and heapsort.  We shall consider the first three of
+these.  Each algorithm has its advantages.
+
+As a concrete basis for comparison, runtimes are quoted for DECstation
+computers.  (These were based on the MIPS chip, an early RISC design.)
+
+{1 How Fast Can We Sort?}
+{ul {- typically count {e comparisons} $C(n)$
+}{- there are $n!$ permutations of $n$ elements
+}{- each comparison eliminates {e half} of the permutations $2^\{C(n)\}\geq n!$
+}{- therefore $C(n)\geq \log(n!)\approx n\log n-1.44n$
+}}
+
+The usual measure of efficiency for sorting algorithms is the number of
+comparison operations required.  Mergesort requires only $O(n\log n)$
+comparisons to sort an input of $n$ items.  It is straightforward to prove
+that this complexity is the best possible.  There
+are $n!$ permutations of $n$ elements and each comparison distinguishes two
+permutations.  The lower bound on the number of comparisons, $C(n)$, is
+obtained by solving $2^\{C(n)\}\geq n!$; therefore $C(n)\geq \log(n!)\approx
+n\log n-1.44n$.
+
+In order to compare the sorting algorithms, we use the {{: http://www.firstpr.com.au/dsp/rand31/p1192-park.pdf} following source} of
+pseudo-random numbers. Never mind how this works: generating
+statistically good random numbers is hard.  Much effort has gone into those few
+lines of code.
+
+{@ocamltop[
+# let nextrandom seed =
+    let a = 16807.0 in
+    let m = 2147483647.0 in
+    let t = a *. seed in
+    t -. m *. (floor (t /. m));;
+  val nextrandom : float -> float = <fun>
+# let rec randlist (seed, seeds) = function
+  | 0 -> (seed, seeds)
+  | n -> randlist (nextrandom seed, seed::seeds) (n-1);;
+  val randlist : float * float list -> int -> float * float list = <fun>
+]}
+
+We can now bind the identifier [rs] to a list of 10,000 random numbers.
+
+{@ocamltop[
+# let seed, rs = randlist (1.0, []) 10000;;
+  val seed : float = 1043618065.
+  val rs : float list =
+    [1484786315.; 925166085.; 1614852353.; 721631166.; 173942219.; 1229443779.;
+     789328014.; 570809709.; 1760109362.; 270600523.; 2108528931.; 16480421.;
+     519782231.; 162430624.; 372212905.; 1954184989.; 898872741.; 1651521688.;
+     1114791388.; 1325968501.; 1469981427.; 465437343.; 1732504088.;
+     280054095.; 1924919450.; 1244369648.; 1524535715.; 706293012.;
+     1372325856.; 1302473561.; 941382430.; 2137445578.; 1937168414.;
+     1852570660.; 495231255.; 1092873378.; 140232191.; 328129841.; 632752255.;
+     227857208.; 1616471915.; 719842438.; 1402481130.; 745001020.; 791471334.;
+     2131048000.; 312659966.; 1389551813.; 443838892.; 854190041.; 741774068.;
+     267473377.; 1372555293.; 1539748349.; 697860888.; 1261546017.; 734770781.;
+     1512111397.; 813238415.; 1034499961.; 602256496.; 462191385.; 250718457.;
+     246489360.; 295426232.; 468306241.; 877829533.; 1130589227.; 1914364883.;
+     1479854970.; 878528585.; 1268712064.; 115837978.; 1803525169.; 689954646.;
+     1174020926.; 651968560.; 391152461.; 1776325865.; 2015344107.; 246977673.;
+     1381242649.; 1115030853.; 190703911.; 316761032.; 464218769.; 1537522160.;
+     1958981931.; 390463588.; 224009597.; 235243732.; 620352731.; 1374109567.;
+     832140633.; 675075162.; 1296171190.; 2009054653.; 1534419747.; 145880482.;
+     1649432515.; 403989126.; 1112417244.; 1290575192.; 896661113.; 218545469.;
+     1002393512.; 2131316096.; 551979127.; 932010335.; 665881436.; 1975412808.;
+     639877791.; 1781707137.; 894518191.; 568004958.; 1331430214.; 629489848.;
+     183264178.; 162027282.; 464592882.; 93302056.; 1178713033.; 1401486247.;
+     1846150129.; 1646978216.; 1104441491.; 111995009.; 66193165.; 2038880392.;
+     79340676.; 871801051.; 967550305.; 2067810758.; 1600354198.; 1746626663.;
+     1516388116.; 1308870791.; 173082747.; 189881227.; 478010722.; 739707315.;
+     255334803.; 164203714.; 1893097038.; 1587694259.; 292950569.; 918323194.;
+     41453146.; 1217297445.; 256768724.; 586494122.; 586258194.; 660494391.;
+     507554325.; 699716071.; 672895139.; 76065072.; 1594869218.; 1439459639.;
+     641123634.; 1650611940.; 177447368.; 301427463.; 525804524.; 553672425.;
+     926899509.; 794676486.; 690277940.; 2115070333.; 1062048650.; 1653192448.;
+     1808855340.; 126475289.; 1028198214.; 1739565096.; 1515748830.;
+     427491435.; 319330584.; 666483848.; 854842154.; 1853528448.; 1975611245.;
+     1905343266.; 1229802342.; 1416055428.; 2091603253.; 1068308139.;
+     198239748.; 982076370.; 1094563396.; 44402415.; 889814989.; 290736902.;
+     417580014.; 1935788352.; 595665917.; 367638848.; 894945148.; 1868608068.;
+     317883051.; 941451621.; 1595942893.; 789094274.; 1150772108.; 422742112.;
+     1444245279.; 1273601104.; 256005435.; 1742330161.; 1514599036.;
+     956344512.; 2113041793.; 293237373.; 1386995194.; 1509339194.; 891946522.;
+     1020832915.; 592544922.; 1746311153.; 1471539715.; 143832370.;
+     2041568248.; 1039556199.; 1608726047.; 1205124472.; 2123533995.;
+     1560620058.; 1837598795.; 1028172251.; 98318742.; 1405510706.;
+     1047695837.; 59221314.; 1822176683.; 1096018886.; 1528104537.;
+     1270922857.; 812074106.; 291115596.; 795788616.; 638657646.; 2034314619.;
+     1527649272.; 156357479.; 1010056202.; 1139413443.; 1110927723.;
+     1216083346.; 846825145.; 2100385733.; 315213605.; 1629637749.;
+     1139833627.; 895118866.; 296359237.; 1361440746.; 1188627020.;
+     1964199872.; 166733080.; 54185744.; 575493576.; 1810324496.; 1765549585.;
+     53514233.; 747348448.; 61758907.; 1710119765.; 188311628.; 8827553.;
+     67975851.; 1808633248.; 1290488843.; 1264775607.; 1711469075.;
+     1537468597.; 706677101.; 518290019.; 190285086.; 157683412.; 985907152.;
+     1571668636.; 632570698.; 791081325.; 1773794197.; 1787141077.;
+     1727982894.; 794213057.; 633163306.; 682601940.; 1573439414.; 1041956036.;
+     1169697582.; 758914445.; 2096291761.; 1502226099.; 1665995955.;
+     948048264.; 1596326605.; 1816773893.; ...]
+]}
+
+{1 Insertion Sort}
+
+An insert operation does $n/2$ comparisons on average.
+
+{@ocamltop[
+# let rec ins x = function
+    | [] -> [x]
+    | y::ys -> if x <= y then x :: y :: ys
+               else y :: ins x ys;;
+  val ins : 'a -> 'a list -> 'a list = <fun>
+]}
+
+{e Insertion sort} takes $O(n^2)$ comparisons on average:
+
+{@ocamltop[
+# let rec insort = function
+    | [] -> []
+    | x::xs -> ins x (insort xs);;
+  val insort : 'a list -> 'a list = <fun>
+]}
+
+Items from the input are copied one at a time to the output.  Each new item is
+inserted into the right place so that the output is always in order.
+
+We could easily write iterative versions of these functions, but to no purpose.
+Insertion sort is slow because it does $O(n^2)$ comparisons (and a lot of list
+copying), not because it is recursive.  Its quadratic runtime makes it nearly
+useless: it takes 174 seconds for our example while the next-worst figure is
+1.4 seconds.
+
+Insertion sort is worth considering because it is easy to code and illustrates
+the concepts.  Two efficient sorting algorithms, mergesort and heapsort, can be
+regarded as refinements of insertion sort.
+
+{1 Quicksort: The Idea}
+
+The Quicksort algorithm has the following flow:
+{ul {- Choose a {e pivot} element, $a$
+}{- Divide to partition the input into two sublists:
+{ul {- those {e at most} $a$ in value
+}{- those {e exceeding} $a$
+}}
+}{- Conquer using recursive calls to sort the sublists
+}{- Combine the sorted lists by appending one to the other
+}}
+
+Quicksort was invented by Sir Anthony Hoare, who works at Microsoft Research,
+Cambridge.  Quicksort works by {e divide and conquer,} a basic algorithm design
+principle.  Quicksort chooses from the input some value $a$, called the
+{e pivot}.  It partitions the remaining items into two parts: those $\leq a$, and
+those $>a$.  It sorts each part recursively, then puts the smaller part before
+the greater.
+
+The cleverest feature of Hoare’s algorithm was that the partition could be done
+{e in place} by exchanging array elements.  Quicksort was invented before
+recursion was well known, and people found it extremely hard to understand.  As
+usual, we shall consider a list version based on functional programming.
+
+{1 Quicksort: The Code}
+
+{@ocamltop[
+# let rec quick = function
+    | [] -> []
+    | [x] -> [x]
+    | a::bs ->
+        let rec part l r = function
+          | [] -> (quick l) @ (a :: quick r)
+          | x::xs ->
+              if (x <= a) then
+                part (x::l) r xs
+              else
+                part l (x::r) xs
+        in
+        part [] [] bs;;
+  val quick : 'a list -> 'a list = <fun>
+]}
+
+Our OCaml quicksort copies the items.  It is still pretty fast, and it is much
+easier to understand.  It takes roughly 0.74 seconds to sort our list of random
+numbers.
+
+The function declaration consists of three clauses.  The first handles the
+empty list; the second handles singleton lists (those of the form [[x]]); the
+third handles lists of two or more elements.  Often, lists of length up to five
+or so are treated as special cases to boost speed.
+
+The locally declared function [part] partitions the input using [a] as the
+pivot.  The arguments [l] and [r] accumulate items for the left ($\leq a$) and
+right ($>a$) parts of the input, respectively.
+
+It is not hard to prove that quicksort does $n\log n$ comparisons, {e in the average case}
+(see {{: https://archive.org/details/designanalysisof00ahoarich} page 94 of Aho}).  With random data, the pivot
+usually has an average value that divides the input in two approximately equal
+parts.  We have the recurrence $T(1) = 1$ and $T(n) = 2T(n/2)+n$, which is
+$O(n\log n)$.  In our example, it is about 235 times faster than insertion
+sort.
+
+In the worst case, quicksort’s running time is quadratic!  An example is when
+its input is almost sorted or reverse sorted.  Nearly all of the items end up
+in one partition; work is not divided evenly.  We have the recurrence
+$T(1) = 1$ and $T(n+1) = T(n)+n$, which is $O(n^2)$.  Randomising the input
+makes the worst case highly unlikely.
+
+{1 Append-Free Quicksort}
+
+{@ocamltop[
+# let rec quik = function
+    | ([], sorted) -> sorted
+    | ([x], sorted) -> x::sorted
+    | a::bs, sorted ->
+       let rec part = function
+         | l, r, [] -> quik (l, a :: quik (r, sorted))
+         | l, r, x::xs ->
+             if x <= a then
+               part (x::l, r, xs)
+             else
+               part (l, x::r, xs)
+       in
+       part ([], [], bs);;
+  val quik : 'a list * 'a list -> 'a list = <fun>
+]}
+
+The list [sorted] accumulates the result in the {e combine} stage of
+the quicksort algorithm.  We have again used the standard technique for
+eliminating append.  Calling [quik(xs, sorted)] reverses the elements of
+[xs] and prepends them to the list [sorted].
+
+Looking closely at [part], observe that [quik(r, sorted)] is
+performed first.  Then [a] is consed to this sorted list.  Finally,
+[quik] is called again to sort the elements of [l].
+
+The speedup is significant.  An imperative quicksort coded in Pascal (taken
+from {{: https://algs4.cs.princeton.edu/20sorting/} Sedgewick}) is just slightly faster than function
+[quik].  The near-agreement is surprising because the computational overheads
+of lists exceed those of arrays.  In realistic applications, comparisons are
+the dominant cost and the overheads matter even less.
+
+{1 Merging Two Lists}
+
+Merge joins two sorted lists.
+
+{@ocamltop[
+# let rec merge = function
+    | [], ys -> ys
+    | xs, [] -> xs
+    | x::xs, y::ys ->
+        if x <= y then
+          x :: merge (xs, y::ys)
+        else
+          y :: merge (x::xs, ys);;
+  val merge : 'a list * 'a list -> 'a list = <fun>
+]}
+
+Generalises insert to two lists, and does at most $m+n-1$ comparisons.
+
+{e Merging} means combining two sorted lists to form a larger sorted list.
+It does at most $m+n$ comparisons, where $m$ and $n$ are the lengths of the
+input lists.  If $m$ and $n$ are roughly equal then we have a fast way of
+constructing sorted lists; if $n=1$ then merging degenerates to insertion,
+doing much work for little gain.
+
+Merging is the basis of several sorting algorithms; we look at a
+divide-and-conquer one.  Mergesort is seldom found in conventional programming
+because it is hard to code for arrays; it works nicely with lists.  It divides
+the input (if non-trivial) into two roughly equal parts, sorts them
+recursively, then merges them.
+
+Function [merge] is not iterative; the recursion is deep.  An iterative
+version is of little benefit for the same reasons that apply to
+[append] in the earlier lecture on Lists.
+
+{1 Top-down Merge sort}
+
+{@ocamltop[
+# let rec tmergesort = function
+    | [] -> []
+    | [x] -> [x]
+    | xs ->
+        let k = List.length xs / 2 in
+        let l = tmergesort (take k xs) in
+        let r = tmergesort (drop k xs) in
+        merge (l, r);;
+  Line 6, characters 28-32:
+  Error: Unbound value take
+]}
+
+$O(n\log n)$ comparisons in worst case
+
+Mergesort’s {e divide} stage divides the input not by choosing a pivot (as
+in quicksort) but by simply counting out half of the elements.  The
+{e conquer} stage again involves recursive calls, and the {e combine}
+stage involves merging.  Function [tmergesort] takes roughly 1.4
+seconds to sort the list [rs].
+
+In the worst case, mergesort does $O(n\log n)$ comparisons, with the same
+recurrence equation as in quicksort’s average case.  Because [take] and
+[drop] divide the input in two equal parts (they differ at most by
+one element), we always have $T(n) = 2T(n/2)+n$.
+
+Quicksort is nearly 3 times as fast in the example.  But it risks a
+quadratic worst case!  Merge sort is safe but slow.  So which algorithm is
+best?
+
+We have seen a {e top-down} mergesort.  {e Bottom-up} algorithms also
+exist.  They start with a list of one-element lists and repeatedly merge
+adjacent lists until only one is left.  A refinement, which exploits any
+initial order among the input, is to start with a list of increasing or
+decreasing runs of input items.
+
+{1 Summary of Sorting Algorithms}
+{ul {- Optimal is $O(n\log n)$ comparisons
+}{- Insertion sort: simple to code; too slow (quadratic) \[174 secs\]
+}{- Quicksort: fast on average; quadratic in worst case \[0.53 secs\]
+}{- Mergesort: optimal in theory; often slower than quicksort \[1.4 secs\]
+}{- {e Match the algorithm to the application}
+}}
+
+Quicksort’s worst case cannot be ignored.  For large $n$, a complexity of
+$O(n^2)$ is catastrophic.  Mergesort has an $O(n\log n)$ worst case running
+time, which is optimal, but it is typically slower than quicksort for random
+data.
+
+Non-comparison sorting deserves mentioning.  We can sort a large number of
+small integers using their radix representation in $O(n)$ time.  This result
+does not contradict the comparison-counting argument because comparisons are
+not used at all.  Linear time is achievable only if the greatest integer is
+fixed in advance; as $n$ goes to infinity, increasingly many of the items
+are the same.  It is a simple special case.
+
+Many other sorting algorithms exist. A few are outlined in the exercises.
+
+{2 Exercise 5.1}
+
+Another sorting algorithm (selection sort) consists of looking at the elements to be sorted,
+identifying and removing a minimal element, which is placed at the head of the result. The tail is
+obtained by recursively sorting the remaining elements. State, with justification, the time
+complexity of this approach.
+
+{2 Exercise 5.2}
+
+Implement selection sort (see previous exercise) using OCaml.
+
+{2 Exercise 5.3}
+
+Another sorting algorithm (bubble sort) consists of looking at adjacent pairs of elements,
+exchanging them if they are out of order and repeating this process until no more exchanges are
+possible. State, with justification, the time complexity of this approach.
+
+{2 Exercise 5.4}
+
+Implement bubble sort (see previous exercise) using OCaml.

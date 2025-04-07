@@ -1,0 +1,29 @@
+{0 Code block metadata}
+
+{@meta hidden[{}]}
+
+Back in 2021 {{:https://github.com/julow}@julow} introduced some {{:https://github.com/ocaml-doc/odoc-parser/pull/2}new syntax} to odoc’s code blocks to allow us to attach arbitrary metadata to the blocks. We imposed no structure on this; it was simply a block of text in between the language tag and the start of the code block. Now odoc needs to use it itself, we need to be a bit more precise about how it’s defined.
+
+The original concept looked like this:
+
+{v
+{@ocaml metadata goes here in an unstructured way[
+  ... code ...
+]}
+v}
+
+where everything in between the language (“ocaml” in this case) and the opening square bracket would be captured and put into the AST verbatim. Odoc itself has had no particular use for this, but it has been used in {{:https://github.com/realworldocaml/mdx}mdx} to control how it handles the code blocks, for example to skip processing of the block, to synchronise the block with another file, to disable testing the block on particular OSs and so on.
+
+As part of the Odoc 3 release we decided to address one of our {{:https://github.com/ocaml/odoc/pull/303}oldest open issues}, that of extracting code blocks from mli/mld files for inclusion into other files. This is similar to the file-sync facility in mdx but it works in the other direction: the canonical source is in the mld/mli file. In order to do this, we now need to use the metadata so we can select which code blocks to extract, and so we needed a more concrete specification of how the metadata should be parsed.
+
+We looked at what {{:https://github.com/realworldocaml/mdx/blob/main/lib/label.ml#L195-L210}mdx does}, but the way it works is rather ad-hoc, using very simple String.splits to chop up the metadata. This is OK for mdx as it’s fully in charge of what things the user might want to put into the metadata, but for a general parsing library like odoc.parser we need to be a bit more careful. Daniel Bünzli {{:https://github.com/ocaml/odoc/pull/1326#issuecomment-2702260053}suggested} a simple strategy of atoms and bindings inspired by s-expressions. The idea is that we can have something like this:
+
+{v
+{@ocaml atom1 "atom two" key1=value1 "key 2"="value with spaces"[
+    ... code content ...
+]}
+v}
+
+Daniel suggested a very minimal escaping rule, whereby a string could contain a literal " by prefixing with a backslash - something like; "value with a \" and spaces", but we discussed it during the {{:https://ocaml.org/governance/platform}odoc developer meeting} and felt that we might want something a little more familiar. So we took a look at the lexer in {{:https://github.com/janestreet/sexplib/blob/master/src/lexer.mll}sexplib} and found that it follows the {{:https://github.com/janestreet/sexplib/blob/d7c5e3adc16fcf0435220c3cd44bb695775020c1/README.org#lexical-conventions-of-s-expression}lexical conventions} of OCaml’s strings, and decided that would be a reasonable approach for us to follow too.
+
+The resulting code, including the extraction logic, was implemented in {{:https://github.com/ocaml/odoc/pull/1326/}PR 1326} mainly by {{:https://github.com/panglesd}@panglesd} with a little help from me on the lexer.

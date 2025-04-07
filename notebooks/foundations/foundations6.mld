@@ -1,0 +1,650 @@
+{0 Lecture 6: Datatypes and Trees}
+
+{@meta hidden[
+{ libs: ["tyxml", "mime_printer", "tyxml.functor"] }
+]}
+
+{@ocaml autorun hidden[
+module TreePrinter = struct
+  let output_svg my_svg =
+    let s = Format.asprintf "%a" (Tyxml.Svg.pp ()) my_svg in
+    Mime_printer.push "image/svg" s
+
+  let rect (x, y) (width, height) =
+    let open Tyxml.Svg in
+    let rect =
+      rect
+        ~a:
+          [
+            a_width (float_of_int width, Some `Px);
+            a_height (float_of_int height, Some `Px);
+            a_x (0.5 +. float_of_int x, None);
+            a_y (0.5 +. float_of_int y, None);
+            a_rx (5.0, None);
+            a_fill (`Color ("#8888ff", None));
+            a_stroke (`Color ("black", None));
+          ]
+        []
+    in
+    rect
+
+  let svg (width, height) content =
+    let open Tyxml.Svg in
+    let bg =
+      rect
+        ~a:
+          [
+            a_width (100., Some `Percent);
+            a_height (100., Some `Percent);
+            a_x (0.0, None);
+            a_y (0.0, None);
+            a_fill `None;
+          ]
+        []
+    in
+    svg
+      ~a:
+        [
+          a_width (float_of_int width, None);
+          a_height (float_of_int height, None);
+        ]
+      (bg :: content)
+
+  let curve (x1, y1) (x2, y2) =
+    let s =
+      Printf.sprintf "M%d %d C %d %d, %d %d, %d %d" x1 y1 x1 y2 x2 y1 x2 y2
+    in
+    let open Tyxml.Svg in
+    path ~a:[ a_d s; a_stroke (`Color ("black", None)); a_fill `None ] []
+
+  let text (x, y) s =
+    let open Tyxml.Svg in
+    text
+      ~a:
+        [
+          a_x_list [ (float_of_int x, None) ];
+          a_y_list [ (float_of_int y, None) ];
+          a_text_anchor `Middle;
+          a_font_size "10pt";
+        ]
+      [ txt s ]
+
+  type 'a tree = Lf | Br of 'a * 'a tree list
+
+  type params = {
+    node_width : int;
+    node_height : int;
+    inter_node_width : int;
+    inter_node_height : int;
+  }
+
+  let rec width params : 'a tree -> int = function
+    | Lf -> params.node_width
+    | Br (_, []) -> params.node_width
+    | Br (_, ts) ->
+        let n = List.length ts in
+        List.fold_left
+          (fun acc t -> acc + width params t)
+          ((n - 1) * params.inter_node_width)
+          ts
+
+  let rec height params : 'a tree -> int = function
+    | Lf -> params.node_height
+    | Br (_, []) -> params.node_height
+    | Br (_, ts) ->
+        let h = List.fold_left (fun acc t -> max acc (height params t)) 0 ts in
+        params.node_height + params.inter_node_height + h
+
+  type tree_result = {
+    rects : Svg_types.rect Tyxml_svg.elt list;
+    lines : Svg_types.path Tyxml_svg.elt list;
+    text : Svg_types.text Tyxml_svg.elt list;
+    width : int;
+    height : int;
+  }
+
+  let pp fmt tree_result =
+    Format.fprintf fmt "width: %d, height: %d" tree_result.width
+      tree_result.height
+
+  let rec combine_horizontal params acc = function
+    | [] -> acc
+    | { rects; width; height; lines; text } :: ts ->
+        let acc =
+          {
+            rects = acc.rects @ rects;
+            lines = acc.lines @ lines;
+            text = acc.text @ text;
+            width = acc.width + width + params.inter_node_width;
+            height = max acc.height height;
+          }
+        in
+        combine_horizontal params acc ts
+
+  let rec draw_tree params to_txt (x, y) tree : tree_result =
+    let txt = to_txt tree in
+    match tree with
+    | Lf | Br (_, []) ->
+        let svg = rect (x, y) (params.node_width, params.node_height) in
+        let text =
+          text (x + (params.node_width / 2), y + (params.node_height / 2)) txt
+        in
+        {
+          rects = [ svg ];
+          width = params.node_width;
+          height = params.node_height;
+          lines = [];
+          text = [ text ];
+        }
+    | Br (_, nodes) ->
+        let new_y = y + params.node_height + params.inter_node_height in
+        let rec inner (acc, lines) x = function
+          | [] -> (List.rev acc, lines)
+          | t :: ts ->
+              let res = draw_tree params to_txt (x, new_y) t in
+              let line_dest = (x + (res.width / 2), new_y) in
+              let new_x = x + params.inter_node_width + res.width in
+              inner (res :: acc, line_dest :: lines) new_x ts
+        in
+        let (r, rs), lines =
+          match inner ([], []) x nodes with
+          | [], _ -> failwith "impossible"
+          | r :: rs, lines -> ((r, rs), lines)
+        in
+        let combined = combine_horizontal params r rs in
+        let box_x = x + ((combined.width - params.node_width) / 2) in
+        let center = x + (combined.width / 2) in
+        let text = text (center, y + (params.node_height / 2)) txt in
+        let lines =
+          List.map
+            (fun dest -> curve (center, y + params.node_height) dest)
+            lines
+        in
+        let new_box = rect (box_x, y) (params.node_width, params.node_height) in
+        {
+          rects = new_box :: combined.rects;
+          width = combined.width;
+          height =
+            combined.height + params.inter_node_height + params.node_height;
+          lines = lines @ combined.lines;
+          text = text :: combined.text;
+        }
+
+  let svg_of_tree params to_txt tree =
+    let result = draw_tree params to_txt (0, 0) tree in
+    svg
+      (result.width + 2, result.height + 2)
+      ((result.rects :> Svg_types.svg_content Tyxml_svg.elt list)
+      @ (result.lines :> Svg_types.svg_content Tyxml_svg.elt list)
+      @ (result.text :> Svg_types.svg_content Tyxml_svg.elt list))
+
+  let test_tree1 = Lf
+  let test_tree2 = Br (1, [ Lf ])
+  let test_tree3 = Br (1, [ Lf; Lf ])
+  let test_tree4 = Br (1, [ Lf; Br (2, [ Lf; Lf ]) ])
+  let test_tree5 = Br (1, [ Lf; Lf; Lf ])
+
+  let test_tree6 =
+    Br (1, [ test_tree1; test_tree2; test_tree3; test_tree4; test_tree5 ])
+
+  let default_params =
+    {
+      node_width = 50;
+      node_height = 40;
+      inter_node_width = 30;
+      inter_node_height = 30;
+    }
+  end;;
+]}
+
+
+{1 An Enumeration Type}
+
+We will now learn how to define more expressive types than the
+basic ones supplied with the core OCaml language.
+
+{@ocamltop autorun[
+# type vehicle = Bike
+               | Motorbike
+               | Car
+               | Lorry;;
+  type vehicle = Bike | Motorbike | Car | Lorry
+]}
+
+{ul {- We have declared a {e new type} named [vehicle].
+}{- {m \ldots} along with four new constants.
+}{- They are the {e constructors} of the datatype.
+}}
+
+The [type] declaration adds a new type to our OCaml session.  Type
+[vehicle] is as good as any built-in type and even admits
+pattern-matching (as we used with the built-in list types earlier).
+The four new identifiers of type [vehicle] are called {e constructors}.
+
+We could represent the various vehicles by the numbers 0--3.  However, the code would be
+hard to read and even harder to maintain.  Consider adding [Tricycle]
+as a new vehicle. If we wanted to add it before [Bike], then all the
+numbers would have to be changed.  Using [type], such additions are
+trivial and the compiler can (at least sometimes) warn us when it encounters a
+function declaration that doesn’t yet have a case for [Tricycle].
+
+Representing vehicles by strings like ["Bike"], ["Car"], etc.,
+is also bad.  Comparing string values is slow and the compiler
+can’t warn us of misspellings like ["MOtorbike"]: they will make our
+code fail.
+
+Most programming languages allow the declaration of types like
+[vehicle].  Because they consist of a series of identifiers, they are
+called {e enumeration types}.  Other common examples are days of the week
+or colours.  The compiler chooses the integers for us; type-checking prevents
+us from confusing [Bike] with [Red] or [Sunday].
+
+{1 Declaring a Function on Vehicles}
+
+{@ocamltop autorun[
+# let wheels = function
+    | Bike -> 2
+    | Motorbike -> 2
+    | Car -> 4
+    | Lorry -> 18;;
+  val wheels : vehicle -> int = <fun>
+]}
+
+{ul {- Datatype constructors can be used in patterns.
+}{- Pattern-matching is fast, even complicated nested patterns.
+}{- Notice the type of the argument is [vehicle], which we defined earlier.
+}}
+
+The beauty of datatype declarations is that the new types behave as if they
+were built into OCaml. Type-checking catches common errors, such as mixing up
+different datatypes in a function like [wheels], as well as missing
+and redundant patterns.
+
+{1 A Datatype whose Constructors have Arguments}
+
+{@ocamltop autorun[
+# type vehicle = Bike
+               | Motorbike of int
+               | Car       of bool
+               | Lorry     of int;;
+  type vehicle = Bike | Motorbike of int | Car of bool | Lorry of int
+]}
+{ul {- Constructors with arguments (like [Lorry]) are {e distinct values}. (So [Car true] is distinct from [Car false]).
+}{- Different kinds of [vehicle] can belong to one list: [[Bike, Car true, Motorbike 450]]
+}}
+
+OCaml generalises the notion of enumeration type to allow data to be associated
+with each constructor.  The constructor [Bike] is a vehicle all by itself, but
+the other three constructors create vehicles from arguments.
+
+Since we might find it hard to remember what the various [int] and
+[bool] components are for, it is wise to include {e comments} in
+complex declarations.  In OCaml, comments are enclosed in the brackets
+[(*] and [*)]. Programmers should comment their code to explain
+design decisions and key features of the algorithms (sometimes by citing a
+reference work).
+
+{@ocamltop autorun[
+# type vehicle = Bike
+               | Motorbike of int  (* engine size in CCs *)
+               | Car       of bool (* true if a Reliant Robin *)
+               | Lorry     of int;;
+  type vehicle = Bike | Motorbike of int | Car of bool | Lorry of int
+]}
+
+The list shown on the slide represents a bicycle, a Reliant Robin and a large
+motorbike.  It can be almost seen as a mixed-type list containing integers and
+booleans.  It is actually a list of vehicles; datatypes lessen the impact of
+the restriction that all list elements must have the same type.
+
+{1 A Finer Wheel Computation}
+
+We now define a [wheels] function to calculate the number of wheels
+in any [vehicle]. This requires pattern matching to retrieve the
+constructors and their associated arguments, around which we build the
+logic:
+
+{@ocamltop[
+# let wheels = function
+  | Bike -> 2
+  | Motorbike _ -> 2
+  | Car robin -> if robin then 3 else 4
+  | Lorry w -> w;;
+  val wheels : vehicle -> int = <fun>
+]}
+
+This function consists of four clauses:
+{ul {- A Bike has two wheels.  This is a constant result.
+}{- A Motorbike has two wheels. The [_] signifies a "wildcard" pattern match that we discard, since the engine size of the bike is not relevant to the number of wheels.
+}{- A Reliant Robin has three wheels; all other cars have four. We bind [robin] to the [bool] argument and then use it in the right hand side of the pattern match, much like a [let] binding in normal code.
+}{- A Lorry has the number of wheels stored with its constructor, and we simply return that.
+}}
+
+There is no overlap between the [Motorbike] and [Lorry] cases.  Although
+[Motorbike] and [Lorry] both hold an integer, OCaml takes the
+constructor into account and keeps any [Motorbike] distinct from any [Lorry].
+
+Vehicles are one example of a concept consisting of several varieties with
+distinct features.  Most programming languages can represent such concepts
+using something analogous to datatypes.  (They are sometimes called
+{e union types} or {e variant records} whose {e tag fields} play the
+role of the constructors.)
+
+A pattern may be built from the constructors of several datatypes, including
+lists. A pattern may also contain integer and string constants. There is no
+limit to the size of patterns or the number of clauses in a function
+declaration. OCaml performs pattern-matching {{: https://dl.acm.org/citation.cfm?id=507641} efficiently}
+(you do not need to understand the details of how it optimises pattern-matching at this stage).
+
+{1 Error Handling: Exceptions}
+
+During a computation, what happens if something goes {e wrong?}
+{ul {- Division by zero
+}{- Pattern matching failure
+}}
+
+{e Exception-handling} lets us recover gracefully.
+{ul {- Raising an exception abandons the current computation.
+}{- Handling the exception attempts an alternative computation.
+}{- The raising and handling can be far apart in the code.
+}{- Errors of {e different sorts} can be handled separately.
+}}
+
+Exceptions are necessary because it is not always possible to tell in advance
+whether or not a search will lead to a dead end or whether a numerical
+calculation will encounter errors such as overflow or divide by zero. Rather
+than just crashing, programs should check whether things have gone wrong, and
+perhaps attempt an alternative computation (perhaps using a different algorithm
+or higher precision). A number of modern languages provide exception handling.
+
+{1 Exceptions in OCaml}
+
+{@ocamltop[
+# exception Failure;;
+  exception Failure
+# exception NoChange of int;;
+  exception NoChange of int
+# raise Failure;;
+  Exception: Failure.
+]}
+
+Each [exception] declaration introduces a distinct sort of exception, which can
+be handled separately from others. If {m E} raises an exception, then its
+evaluation has failed; {e handling} an exception means evaluating another
+expression and returning its value instead. One exception handler can specify
+separate expressions for different sorts of exceptions.
+
+Exception names are {e constructors} of the special datatype [exn].  This is a
+peculiarity of OCaml that lets exception-handlers use pattern-matching. Note that
+exception [Failure] is just an error indication, while [NoChange n] carries
+further information: the integer {m n}.
+
+{@ocamltop[
+# try
+    print_endline "pre exception";
+    raise (NoChange 1);
+    print_endline "post exception";
+  with
+    | NoChange _ ->
+        print_endline "handled a NoChange exception";;
+  pre exception
+  handled a NoChange exception
+  Line 3, characters 4-22:
+  Warning 21 [nonreturning-statement]: this statement never returns (or has an unsound type.)
+  - : unit = ()
+]}
+
+The effect of [raise <expr>] is to jump to the most recently-encountered
+handler that matches [<expr>].  The matching handler can only be found
+{e dynamically} (during execution); contrast with how OCaml associates occurrences
+of identifiers with their matching declarations, which does not require running
+the program.  A handler is introduced via the [try] keyword, which executes
+the subexpression and dispatches any exceptions encountered to the corresponding
+pattern match for exceptions defined in the [with] block.
+
+This is also the first time that we have encountered the [unit] type. This
+represents a type that has no values, and is used to indicate that a block
+has no meaningful return value.  We will come back to this when learning more
+about {e imperative} programming later on.  For now, it is sufficient to understand
+that [print_endline] will print out the argument to the console output, and return
+a [unit] type.  The semicolon at the end of the expression is a convenient way to
+execute sequential statements that return the [unit] type.
+
+One criticism of OCaml’s exceptions is that---unlike the Java language---nothing
+in a function declaration indicates which exceptions it might raise. One
+alternative to exceptions is to instead return a value of datatype [option].
+
+{@ocamltop[
+# let x = Some 1;;
+  val x : int option = Some 1
+]}
+
+[None] signifies an error, while [Some x] returns the solution {m x}.  This
+approach looks clean, but the drawback is that many places in the code would
+have to check for [None].  Despite this, there is a builtin [option] type
+in OCaml as it is so useful. We will see in later lectures how to define our
+own version of [option] using polymorphic datatype definitions.
+
+{1 Making Change with Exceptions}
+
+{@ocamltop[
+# exception Change;;
+  exception Change
+# let rec change till amt =
+    match till, amt with
+    | _, 0         -> []
+    | [], _        -> raise Change
+    | c::till, amt -> if amt < 0 then raise Change
+                      else try c :: change (c::till) (amt - c)
+                           with Change -> change till amt;;
+  val change : int list -> int -> int list = <fun>
+]}
+
+In the Lists lectures, we considered the problem of making change.  The greedy
+algorithm presented there could not express “6 using 5 and 2” because it always
+took the largest coin.  Returning the list of all possible solutions avoids
+that problem rather expensively: we only need one solution.
+
+Using exceptions, we can code a {e backtracking} algorithm: one that can undo
+past decisions if it comes to a dead end.  The exception [Change] is raised if
+we run out of coins (with a non-zero amount) or if the amount goes negative.
+We always try the largest coin, but enclose the recursive call in an exception
+handler, which undoes the choice if it goes wrong.
+
+Carefully observe how exceptions interact with recursion.  The exception
+handler always undoes the {e most recent} choice, leaving others possibly to
+be undone later.  If making change really is impossible, then eventually
+[exception Change] will be raised with no handler to catch it, and it
+will be reported at top level.
+
+\newpage
+
+{1 Making Change: A Trace}
+
+Here is the full execution. Observe how the exception handlers nest and how
+they drop away once the given expression has returned a value.
+
+{math
+\begin{aligned}
+\text{change [5; 2] 6}
+  \Rightarrow &\; \text{try 5::change [5; 2] 1}\\
+              &\; \text{with Change -> change [2] 6}\\
+  \Rightarrow &\; \text{try 5::(try 5::change [5; 2] (-4)}\\
+              &\; \text{with Change -> change [2] 1)}\\
+              &\; \text{with Change -> change [2] 6}\\
+  \Rightarrow &\; \text{5::(change [2] 1)}\\
+              &\; \text{with Change -> change [2] 6}\\
+  \Rightarrow &\; \text{try 5::(try 2::change [2] (-1)}\\
+              &\; \text{with Change -> change [] 1)}\\
+              &\; \text{with Change -> change [2] 6} \\
+  \Rightarrow &\; \text{try 5::(change [] 1)}\\
+              &\; \text{with Change -> change [2] 6} \\
+  \Rightarrow &\; \text{change [2] 6} \\
+  \Rightarrow &\; \text{try 2::change [2] 4}\\
+              &\; \text{with Change -> change [] 6} \\
+  \Rightarrow &\; \text{try 2::(try 2::change [2] 2}\\
+              &\; \text{with Change -> change [] 4)}\\
+              &\; \text{with Change -> change [] 6} \\
+  \Rightarrow &\; \text{try 2::(try 2::(try 2::change [2] 0 }\\
+              &\; \text{with Change -> change [] 2)}\\
+              &\; \text{with Change -> change [] 4)}\\
+              &\; \text{with Change -> change [] 6} \\
+  \Rightarrow &\; \text{try 2::(try 2::[2]}\\
+              &\; \text{with Change -> change [] 4)}\\
+              &\; \text{with Change -> change [] 6} \\
+  \Rightarrow &\; \text{try 2::[2; 2]}\\
+              &\; \text{with Change -> change [] 6} \\
+  \Rightarrow &\; \text{[2; 2; 2]} 
+\end{aligned}
+}
+
+{1 Binary Trees, a Recursive Datatype}
+
+{@ocamltop autorun[
+# type 'a tree =
+    Lf
+  | Br of 'a * 'a tree * 'a tree;;
+  type 'a tree = Lf | Br of 'a * 'a tree * 'a tree
+]}
+
+{@ocamltop autorun hidden[
+# let tree_printer to_txt t =
+  let rec tree = function
+    | Lf -> TreePrinter.Lf
+    | Br (n, l, r) -> TreePrinter.Br (n, [tree l; tree r])
+  in
+  let to_txt = function
+    | TreePrinter.Lf -> "Lf"
+    | TreePrinter.Br (n, _) -> to_txt n
+  in
+  let svg = TreePrinter.svg_of_tree TreePrinter.default_params to_txt (tree t) in
+  Mime_printer.push "image/svg" (Format.asprintf "%a" (Tyxml.Svg.pp ()) svg);;
+  val tree_printer :
+    ('a -> string Tyxml.Svg.wrap Tyxml.Svg.wrap) -> 'a tree -> unit = <fun>
+]}
+
+A data structure with multiple branching is called a “tree”.  Trees can
+represent mathematical expressions, logical formulae, computer programs, the
+phrase structure of English sentences, etc.
+
+{x@ocamltop autorun[
+# let tree = Br(1, Br(2, Br(4, Lf, Lf),
+                   Br(5, Lf, Lf)),
+                 Br(3, Lf, Lf));;
+  val tree : int tree =
+    Br (1, Br (2, Br (4, Lf, Lf), Br (5, Lf, Lf)), Br (3, Lf, Lf))
+# tree_printer string_of_int tree;;
+  - : unit = ()
+]x[
+{%html: <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="452" height="252"><rect width="100%" height="100%" x="0" y="0" fill="none"></rect><rect width="50px" height="40px" x="200.5" y="0.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="120.5" y="70.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="40.5" y="140.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="0.5" y="210.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="80.5" y="210.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="200.5" y="140.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="160.5" y="210.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="240.5" y="210.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="360.5" y="70.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="320.5" y="140.5" rx="5" fill="#8888ff" stroke="black"></rect><rect width="50px" height="40px" x="400.5" y="140.5" rx="5" fill="#8888ff" stroke="black"></rect><path d="M225 40 C 225 70, 385 40, 385 70" stroke="black" fill="none"></path><path d="M225 40 C 225 70, 145 40, 145 70" stroke="black" fill="none"></path><path d="M145 110 C 145 140, 225 110, 225 140" stroke="black" fill="none"></path><path d="M145 110 C 145 140, 65 110, 65 140" stroke="black" fill="none"></path><path d="M65 180 C 65 210, 105 180, 105 210" stroke="black" fill="none"></path><path d="M65 180 C 65 210, 25 180, 25 210" stroke="black" fill="none"></path><path d="M225 180 C 225 210, 265 180, 265 210" stroke="black" fill="none"></path><path d="M225 180 C 225 210, 185 180, 185 210" stroke="black" fill="none"></path><path d="M385 110 C 385 140, 425 110, 425 140" stroke="black" fill="none"></path><path d="M385 110 C 385 140, 345 110, 345 140" stroke="black" fill="none"></path><text x="225" y="20" text-anchor="middle" font-size="10pt">1</text><text x="145" y="90" text-anchor="middle" font-size="10pt">2</text><text x="65" y="160" text-anchor="middle" font-size="10pt">4</text><text x="25" y="230" text-anchor="middle" font-size="10pt">Lf</text><text x="105" y="230" text-anchor="middle" font-size="10pt">Lf</text><text x="225" y="160" text-anchor="middle" font-size="10pt">5</text><text x="185" y="230" text-anchor="middle" font-size="10pt">Lf</text><text x="265" y="230" text-anchor="middle" font-size="10pt">Lf</text><text x="385" y="90" text-anchor="middle" font-size="10pt">3</text><text x="345" y="160" text-anchor="middle" font-size="10pt">Lf</text><text x="425" y="160" text-anchor="middle" font-size="10pt">Lf</text></svg> %}
+]}
+
+
+{e Binary trees} are nearly as fundamental as lists.  They can provide
+efficient storage and retrieval of information.  In a binary tree, each node
+is empty ({m Lf}), or is a branch ({m Br}) with a label and two subtrees.
+
+OCaml lists are a datatype and could be declared as follows:
+
+{@ocamltop autorun[
+# type 'a mylist =
+    | Nil
+    | Cons of 'a * 'a mylist;;
+  type 'a mylist = Nil | Cons of 'a * 'a mylist
+]}
+
+We could even declare [::] as an infix constructor.  The only
+thing we could not define is the [[...]] notation, which is
+part of the OCaml grammar (although there does exist a mechanism
+to use a {e similar} syntax for custom indexed datatypes).
+
+A recursive type does not have to be polymorphic.
+For example, here is a simple datatype of tree shapes with no attached data
+that is recursive but not polymorphic.
+
+{@ocamltop autorun[
+# type shape =
+    | Null
+    | Join of shape * shape;;
+  type shape = Null | Join of shape * shape
+]}
+
+The datatype ['a option] (mentioned above) is the opposite -- it is
+polymorphic, but not recursive.
+
+{1 Basic Properties of Binary Trees}
+
+{@ocamltop autorun[
+# let rec count = function
+    | Lf -> 0  (* number of branch nodes *)
+    | Br (v, t1, t2) -> 1 + count t1 + count t2;;
+  val count : 'a tree -> int = <fun>
+# let rec depth = function
+    | Lf -> 0  (* length of longest path *)
+    | Br (v, t1, t2) -> 1 + max (depth t1) (depth t2);;
+  val depth : 'a tree -> int = <fun>
+]}
+
+The invariant {m \texttt{count}(t)\le 2^{\texttt{depth}(t)} - 1} holds in the functions above.
+
+Functions on trees are expressed recursively using pattern-matching.  Both
+functions above are analogous to \texttt\{length\} on lists.  Here is a third
+measure of a tree’s size:
+
+{@ocamltop autorun[
+# let rec leaves = function
+    | Lf -> 1
+    | Br (v, t1, t2) -> leaves t1 + leaves t2;;
+  val leaves : 'a tree -> int = <fun>
+]}
+
+This function is redundant because of a basic fact about trees, which can be
+proved by induction: for every tree {m t}, we have {m \texttt{leaves}(t) = \texttt{count}(t)+1}.
+The inequality shown on the slide also has an elementary
+proof by induction.
+
+A tree of depth 20 can store {m 2^{20}-1} or approximately one million elements.
+The access paths to these elements are short, particularly when compared with
+a million-element list!
+
+{1 Exercises}
+
+{2 Exercise 6.1}
+
+Give the declaration of an OCaml type for the days of the week. Comment on the practicality of such
+a type in a calendar application.
+
+{2 Exercise 6.2}
+
+Write an OCaml function taking a binary tree labelled with integers and returning their sum.
+
+{2 Exercise 6.3}
+
+Using the definition of ['a tree] from before:
+
+{@ocamltop[
+# type 'a tree = Lf | Br of 'a * 'a tree * 'a tree;;
+  type 'a tree = Lf | Br of 'a * 'a tree * 'a tree
+]}
+
+Examine the following function declaration. What does [ftree (1, n)] accomplish?
+
+{@ocamltop[
+# let rec ftree k n =
+    if n = 0 then Lf
+    else Br (k, ftree (2 * k) (n - 1), ftree (2 * k + 1) (n - 1));;
+  val ftree : int -> int -> int tree = <fun>
+]}
+
+{2 Exercise 6.4}
+
+Give the declaration of an OCaml type for arithmetic expressions that have the following
+possibilities: floating-point numbers, variables (represented by strings), or expressions of the form {m -E},
+{m E+E}, {m E\times E}.
+
+{2 Exercise 6.5}
+
+Continuing the previous exercise, write a function that evaluates an expression. If the expression
+contains any variables, your function should raise an exception indicating the variable name.

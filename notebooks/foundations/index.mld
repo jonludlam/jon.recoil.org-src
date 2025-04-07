@@ -1,0 +1,21 @@
+{0 Foundations of Computer Science}
+
+@children_order foundations1 foundations2 foundations3 foundations4 foundations5 foundations6 foundations7 foundations8 foundations9 foundations10 foundations11
+
+{1 Introduction}
+These are a series of odoc notebooks created from the lecture notes of the 1A course 
+"Foundations of Computer Science", taught at the University of Cambridge.
+
+This course is lectured by Anil Madhavapeddy, with the practical exercises managed by me.
+These notes are translated from Lawrence C. Paulson’s earlier course on Standard ML,
+which had credits to David Allsopp, Stuart Becker, Gavin Bierman, Chloë Brown, Silas Brown,
+Qi Chen, David Cottingham, William Denman, Robert Harle, Daniel Hulme, Frank King, Jack
+Lawrence-Jones, Joseph Lord, Dimitrios Los, Farhan Mannan, James Margetson, David Morgan,
+Alan Mycroft, Sridhar Prabhu, Frank Stajano, Alex Trifanov, Thomas Tuerk, Xincheng Wang,
+Philip Withnall and Assel Zhiyenbayeva for pointing out errors. The current notes were ported to
+OCaml in 2019 by Anil Madhavapeddy, David Allsopp, and me and subsequently edited
+by Jeremy Yallop. We thank Richard Sharp, Srinivasan Keshav, Ambroise Lafont, Vojtěch Tvrdík
+and Jeremy Yallop for further feedback and corrections since 2020.
+
+{!/site/notebooks/foundations/page-foundations1}
+

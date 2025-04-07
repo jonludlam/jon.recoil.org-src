@@ -1,0 +1,413 @@
+{0 Lecture 4: More on Lists}
+
+{@meta hidden[{}]}
+
+{1 List Utilities: take and drop}
+
+This lecture examines more list utilities, illustrating more patterns of
+recursion, and concludes with a small program for making change.
+
+The functions [take] and [drop] divide a list
+into parts, returning or discarding the first $i$ elements.
+
+$$
+xs = \[\underbrace\{x_0,\ldots,x_\{i-1\}\}{e \{\text\{take i xs\}\},
+\underbrace\{x_i,\ldots,x}\{n-1\}\}_\{\text\{drop i xs\}\} \]
+$$
+
+They can be implemented in OCaml as follows:
+
+{@ocamltop[
+# let rec take i = function
+    | [] -> []
+    | x::xs ->
+        if i > 0 then x :: take (i - 1) xs
+        else [];;
+  val take : int -> 'a list -> 'a list = <fun>
+# let rec drop i = function
+    | [] -> []
+    | x::xs ->
+        if i > 0 then drop (i-1) xs
+        else x::xs;;
+  val drop : int -> 'a list -> 'a list = <fun>
+]}
+
+Applications of [take] and [drop] will appear in future lectures.  Typically,
+they divide a collection of items into equal parts for recursive processing.
+
+The [take] function is not iterative, but making it so would not improve
+its efficiency.  The task requires copying up to $i$ list elements, which must
+take $O(i)$ space and time.
+
+Function [drop] simply skips over $i$ list elements.  This requires
+$O(i)$ time but only constant space.  It is iterative and much faster than
+[take].  Both functions use $O(i)$ time, but skipping elements is faster
+than copying them:  [drop]’s constant factor is smaller.
+
+Both functions take an integer and a list, returning a list of the same type.
+So their type is [int -> 'a list -> 'a list].
+
+{1 Linear Search}
+{ul {- find $x$ in list $\[x_1,\ldots,x_n\]$ by comparing with each element
+}{- obviously $O(n)$ time
+}{- simple & general
+}{- ordered searching needs only $O(\log n)$
+}{- indexed lookup needs only $O(1)$
+}}
+
+{e Linear search} is the obvious way to find a desired item in a
+collection: simply look through all the items, one at a time.  If $x$ is in
+the list, then it will be found in $n/2$ steps on average, and even the worst
+case is obviously $O(n)$.
+
+Large collections of data are usually ordered or indexed so that items can be
+found in $O(\log n)$ time, which is exponentially better than $O(n)$.  Even
+$O(1)$ is achievable (using a hash table), though subject to the usual
+proviso that machine limits are not exceeded.
+
+Efficient indexing methods are of prime importance: consider Web
+search engines.  Nevertheless, linear search is often used to search small
+collections because it is so simple and general, and it is the starting point
+for better algorithms.
+
+{1 Equality Tests}
+
+{@ocamltop[
+# let rec member x = function
+   | [] -> false
+   | y::l ->
+      if x = y then true
+      else member x l;;
+  val member : 'a -> 'a list -> bool = <fun>
+]}
+
+All the list functions we have encountered up to now have been “polymorphic”,
+working for lists of any type.  Function [member] uses linear search to report
+whether or not [x] occurs in [l].
+
+To do this generically, it uses a special feature of OCaml known as
+“polymorphic equality”, which manifests itself via the [=], [>=], [<=], [>] and
+[<] operators.  These operators inspect the {e structure} of the values using a
+consistent order.  Types you can legitimately compare this way include integers,
+strings, booleans, and tuples or lists of primitive types.
+
+More complex types can be compared this way within careful limits: recursive
+structures or function values will not work (we will cover function values in
+the Currying lecture later).  For now, it is sufficient to use these magic
+polymorphic equality operators.  As you get more familiar with OCaml and the
+use of higher order functions (also covered in a later lecture), you will
+encounter the use of explicit [compare] functions that are used to provide more
+complex equality tests.
+
+The presence of polymorphic equality is a contentious feature in OCaml.  While
+it provides a great ease of use in smaller codebases, it starts to become more
+dangerous when building larger OCaml-based systems.  Most large-scale users of
+OCaml tend towards not using it in important code, but it is just fine for our
+purposes while learning the beginning steps of computer science.
+
+{1 Building a List of Pairs}
+
+{@ocamltop[
+# let rec zip xs ys =
+    match xs, ys with
+    | (x::xs, y::ys) -> (x, y) :: zip xs ys
+    | _ -> [];;
+  val zip : 'a list -> 'b list -> ('a * 'b) list = <fun>
+]}
+
+$$ \left.\[x_1,\ldots,x_n\]\atop
+\[y_1,\ldots,y_n\]\right\};\longmapsto;\[(x_1,y_1),\ldots,(x_n,y_n)\]
+$$
+
+The {e wildcard} pattern [_] matches {e anything}. We could have written a
+variable such as [p] instead, but the wildcard reminds us that the
+relevant clause ignores this argument.
+
+The patterns are also tested in order of their definitions: first
+[(x::xs, y::ys)], then [_].
+
+A list of pairs of the form $\[(x_1,y_1),\ldots,(x_n,y_n)\]$ associates each
+$x_i$ with $y_i$.  Conceptually, a telephone directory could be regarded as
+such a list, where $x_i$ ranges over names and $y_i$ over the corresponding
+telephone number.  Linear search in such a list can find the $y_i$ associated
+with a given $x_i$, or vice versa---very slowly.
+
+In other cases, the $(x_i,y_i)$ pairs might have been generated by applying a
+function to the elements of another list $\[z_1,\ldots,z_n\]$.
+
+{@ocamltop[
+# let rec unzip = function
+   | [] -> ([], [])
+   | (x, y)::pairs ->
+       let xs, ys = unzip pairs in
+       (x::xs, y::ys);;
+  val unzip : ('a * 'b) list -> 'a list * 'b list = <fun>
+]}
+
+Given a list of pairs, [unzip] has to build {e two} lists of
+results, which is awkward using recursion.  The version shown above uses the
+{e local binding} [let p = ]$;E_1;$[in]$;E_2$,
+where the value of $E_1$ is bound to the pattern [P] within $E_2$. The
+let-construct counts as an expression and can be used (perhaps wrapped
+within parentheses) wherever an expression is expected.
+
+Note especially the phrase [let xs, ys = unzip pairs]
+which binds [xs] and [ys] to the results of the recursive call.
+In general, the phrase [let P = E] matches the
+pattern $P$ against the value of expression $E$.  It binds all the variables
+in $P$ to the corresponding values.
+
+The functions [zip] and [unzip] build and take apart lists of
+pairs: [zip] pairs up corresponding list elements and [unzip]
+inverts this operation.  Their types reflect what they do:
+
+{@ocamltop[
+# zip;;
+  - : 'a list -> 'b list -> ('a * 'b) list = <fun>
+# unzip;;
+  - : ('a * 'b) list -> 'a list * 'b list = <fun>
+]}
+
+If the lists are of unequal length, [zip] discards surplus items at the
+end of the longer list.  Its first pattern only matches a pair of non-empty
+lists.  The second pattern is just a wildcard and could match anything.  OCaml
+tries the clauses in the order given, so the first pattern is tried first.
+The second only gets arguments where at least one of the lists is empty.
+
+{1 Building a Pair of Results}
+
+Here is a version of [unzip] that replaces the local declaration by a
+function [conspair] for taking apart the pair of lists in the
+recursive call.  It defines the same
+computation as the previous version of [unzip] and is possibly clearer,
+but not every local binding can be eliminated as easily.
+
+{@ocamltop[
+# let conspair ((x, y), (xs, ys)) = (x::xs, y::ys);;
+  val conspair : ('a * 'b) * ('a list * 'b list) -> 'a list * 'b list = <fun>
+# let rec unzip = function
+    | [] -> ([], [])
+    | xy :: pairs -> conspair (xy, unzip pairs);;
+  val unzip : ('a * 'b) list -> 'a list * 'b list = <fun>
+]}
+
+Making the function iterative yields [revUnzip] below, which is
+very simple.  Iteration can construct many results at once in different
+argument positions.  Both output lists are built in reverse order, which can
+be corrected by reversing the input to [revUnzip].  The total costs
+will probably exceed those of [unzip] despite the advantages of
+iteration.
+
+{@ocamltop[
+# let rec revUnzip = function
+    | ([], xs, ys) -> (xs, ys)
+    | ((x, y)::pairs, xs, ys) ->
+        revUnzip (pairs, x::xs, y::ys);;
+  val revUnzip : ('a * 'b) list * 'a list * 'b list -> 'a list * 'b list =
+    <fun>
+]}
+
+{1 An Application: Making Change}
+
+Consider a till that has unlimited supplies of coins.  The largest coins should be tried
+first, to avoid giving change all in pennies.  The list of legal coin values,
+called [till], is given in descending order, such as 50, 20, 10, 5,
+2 and 1.  (Recall that the head of a list is the element most easily reached.)
+The code for [change] is based on simple observations:
+{ul {- Change for zero consists of no coins at all.  (Note the pattern of [0] in the first clause.)
+}{- For a nonzero amount, try the largest available coin.  If it is small enough, use it and decrease the amount accordingly.
+}{- Exclude from consideration any coins that are too large.
+}}
+
+{@ocamltop[
+# let rec change till amt =
+    match till, amt with
+    | _, 0         -> []
+    | [], _        -> raise (Failure "no more coins!")
+    | c::till, amt -> if amt < c then change till amt
+                      else c :: change (c::till) (amt - c);;
+  val change : int list -> int -> int list = <fun>
+]}
+
+Although nobody considers making change for zero, this is the simplest way to
+make the algorithm terminate.  Most iterative procedures become simplest if,
+in their base case, they do nothing.  A base case of one instead of zero is
+often a sign of a novice programmer.
+{ul {- The recursion {e terminates} when [amt = 0].
+}{- Tries the {e largest coin first} to use large coins.
+}{- The algorithm is {e greedy} and can fail!
+}}
+
+The function can terminate either with success or failure.  It fails by
+raising exception [Failure] namely if [till] becomes empty while [amt] is still nonzero.
+(Exceptions will be discussed later.)
+
+Unfortunately, failure can occur even when change can be made.  The greedy
+"largest coin first" approach is to blame.  Suppose we have coins of values 5
+and 2, and must make change for 6; the only way is $6=2+2+2$, ignoring the 5.
+{e Greedy algorithms} are often effective, but not here.
+
+{1 All Ways of Making Change}
+
+Now we generalise the problem to return the list of {e all possible ways} of making change,
+and write a new [change] function.
+
+{@ocamltop[
+# let rec change till amt =
+    match till, amt with
+    | _       , 0   -> [ [] ]
+    | []      , _   -> []
+    | c::till , amt -> if amt < c then change till amt
+                      else let rec allc = function
+                             | [] -> []
+                             | cs :: css -> (c::cs) :: allc css
+                           in
+                             allc (change (c::till) (amt - c)) @
+                                   change till amt;;
+  val change : int list -> int -> int list list = <fun>
+]}
+
+Look at the type: the result is now a list of lists.
+The code will also never raise exceptions.  It expresses failure by returning an
+empty list of solutions: it returns [[]] if the till is empty and the
+amount is nonzero.
+
+If the amount is zero, then there is only one way of making change;
+the result should be [[[]]].  This is success in the base case.
+
+In nontrivial cases, there are two sources of solutions: to use a coin (if
+possible) and decrease the amount accordingly, or to remove the current coin
+value from consideration.
+
+The function [allc] is declared locally in order to make use
+of [c], the current coin.  It adds an extra [c] to all the
+solutions returned by the recursive call to make change for [amt - c].
+
+Observe the naming convention: [cs] is a list of coins, while
+[css] is a list of such lists.  The trailing `s' is suggestive of a
+plural.
+
+This complicated program, and the even trickier one on the next slide, are
+included as challenges.  Are you enthusiastic enough to work them out?  We
+shall revisit the “making change” task later to illustrate exception-handling.
+
+{1 All Ways of Making Change --- Faster!}
+
+{@ocamltop[
+# let rec change till amt chg chgs =
+    match till, amt with
+    | _       , 0   -> chg::chgs
+    | []      , _   -> chgs
+    | c::till , amt -> if amt < 0 then chgs
+                       else change (c::till) (amt - c) (c::chg)
+                                   (change till amt chg chgs);;
+  val change : int list -> int -> int list -> int list list -> int list list =
+    <fun>
+]}
+
+We’ve added {e another} accumulating parameter!  Repeatedly improving simple code
+is called {e stepwise refinement}.
+
+Two extra arguments eliminate many [::] and append operations from the previous
+slide’s [change] function.  The first, [chg], accumulates the coins chosen so
+far; one evaluation of c::chg\} replaces many evaluations of [allc].  The
+second, [chgs], accumulates the list of solutions so far; it avoids the need
+for append.  This version runs several times faster than the previous one.
+
+Making change is still extremely slow for an obvious reason: the number of
+solutions grows rapidly in the amount being changed.  Using 50, 20, 10, 5,
+2 and 1, there are 4366 ways of expressing 99.
+
+Our three change functions illustrate a basic technique: program development
+by stepwise refinement.  Begin by writing a very simple program and add
+requirements individually.  Add efficiency refinements last of all.
+Even if the simpler program cannot be included in the next version and has
+to be discarded, one has learned about the task by writing it.
+
+{2 Exercise 4.1}
+
+Sets can be represented in OCaml using lists containing no duplicated items
+(i.e. where no item is equal to another using polymorphic comparison).
+
+Using the [member] function defined above, code a function to implement set
+union. It should avoid introducing repetitions, for example the union of the
+lists [[4; 7; 1]] and [[6; 4; 7]] should be [[1; 6; 4; 7]] (though the order
+does not matter).
+
+{2 Exercise 4.2}
+
+Code a function that takes a list of integers and returns two lists, the first consisting of all
+non-negative numbers found in the input and the second consisting of all the negative numbers.
+
+{2 Exercise 4.3}
+
+How does this version of [zip] differ from the one above?
+
+{@ocamltop skip[
+# let rec zip xs ys =
+  match xs, ys with
+  | (x::xs, y::ys) -> (x, y) :: zip xs ys
+  | ([], [])   -> [];;
+  Lines 2-4, characters 2-20:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  (x::xs, [])
+  val zip : 'a list -> 'b list -> ('a * 'b) list = <fun>
+]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Lines 2-4, characters 5-23:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(_::_, [])
+]}
+
+{2 Exercise 4.4}
+
+What assumptions do the ‘making change’ functions make about the variables [till] and [amt]?
+Describe what could happen if these assumptions were violated.
+
+{2 Exercise 4.5}
+
+Show that the number of ways of making change for $n$ (ignoring order) is $O(n)$ if there are two
+legal coin values. What if there are three, four, … coin values?
+
+{2 Exercise 4.6}
+
+We know nothing about the functions [f] and [g] other than their polymorphic types:
+[val f : 'a * 'b -> 'b * 'a] and [val g : 'a -> 'a list].
+Suppose that [f (1, true)] and [g 0] are evaluated and return their results. State, with reasons,
+what you think the resulting values will be.

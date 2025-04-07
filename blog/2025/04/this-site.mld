@@ -1,0 +1,93 @@
+{0 This site}
+
+{@meta hidden[
+{ libs: [ "mime_printer" ] }
+]}
+
+I've spent a {e lot} of time over the past few years working on Odoc, the OCaml documentation
+generator, so when it came time to (re)start my own website and blog, I found it hard to resist
+thinking about how I might use odoc as part of it. We've spent a lot of time recently trying to
+make odoc more able to generate structured documentation sites, so I've gone all in and am
+trialling using it as a tool to generate my entire site. This is a bit of an experiment, and I
+don't know how well it will work out, but let's see how it goes.
+
+Additionally, I've recently been working on a project currently called [odoc_notebook], which is a
+set of tools to allow odoc [mld] files to be used as a sort of Jupyter-style notebook. The idea is
+that you can write both text and code in the same file, and then run the code in the notebook
+interactively. Since I've only got a webserver, all the execution of code has to be done client
+side, so I'm making extensive use of the phenomenal {{:https://github.com/ocsigen/js_of_ocaml}Js_of_ocaml}
+project to get an OCaml engine running in the browser.
+
+My focus has initially been on getting 'toplevel-style' code execution working. As an example, let's
+write a little demo.
+
+{1 Demo}
+Let's start with a little demo:
+
+{@ocamltop[
+# let x = 1 + 2;;
+  val x : int = 3
+]}
+
+It's intended to look like an OCaml toplevel session, so each new expression starts with a [#] and is
+terminated with a double semicolon. The response from the toplevel is then below that indented with 
+2 spaces. Right now, there's not much in the way of error checking so you can make it all very 
+confused by deleting the hash, removing the [;;] and so on. Avoiding this, however, you can edit the
+numbers here and hit 'run' (maybe twice!) to see the results being updated.
+
+There is also a little integration to allow the code to produce output more interesting than just
+text. The following cell creates an SVG image and 'pushes' it to [Mime_printer], which receives the
+mime value and renders it in the browser below the code block.
+
+{x@ocamltop[
+# let svg = [
+    {|<svg height="210" width="500" xmlns="http://www.w3.org/2000/svg">|};
+    {|<polygon points="100,10 40,198 190,78 10,78 160,198" |};
+    {|style="fill:lime;stroke:purple;stroke-width:5;"/></svg>|}];;
+  val svg : string list =
+    ["<svg height=\"210\" width=\"500\" xmlns=\"http://www.w3.org/2000/svg\">";
+     "<polygon points=\"100,10 40,198 190,78 10,78 160,198\" ";
+     "style=\"fill:lime;stroke:purple;stroke-width:5;\"/></svg>"]
+# Mime_printer.push "image/svg" (String.concat "\n" svg);;
+  - : unit = ()
+]x[
+{%html: <svg height="210" width="500" xmlns="http://www.w3.org/2000/svg">
+<polygon points="100,10 40,198 190,78 10,78 160,198" 
+style="fill:lime;stroke:purple;stroke-width:5;"/></svg> %}
+]}
+
+{1 Things to come}
+
+There are a bunch of things I want to add to this, for example, Merlin support.
+In fact, merlin-js already exists and works, but the problem is that it's not
+really designed for toplevel work, and it doesn't work when the code is broken
+up into chunks like I do here. So either I need to concatenate all the cells
+together before I give it to Merlin, or I need to make each cell it's own little
+module and 'open' every previous cell's module. 
+
+Within a single cell, it does already work:
+
+{@ocaml[
+type t = { foo : int; bar : string };;
+
+let x = { foo = 1; bar = "hello" };;
+
+let this_line_has_an_error = { foo = 1; bar = None };;
+]}
+
+But across cells, Merlin doesn't work, though the code is executes correctly. You can see that in
+the following cell, which re-pushes the SVG image from the cell above. Merlin highlights that
+it doesn't know what [svg] is, but the code gets executed correctly and the image is rendered
+below the cell. 
+
+{x@ocaml[
+Mime_printer.push "image/svg" (String.concat "\n" svg);;
+]x[
+{%html: <svg height="210" width="500" xmlns="http://www.w3.org/2000/svg">
+<polygon points="100,10 40,198 190,78 10,78 160,198" 
+style="fill:lime;stroke:purple;stroke-width:5;"/></svg> %}
+]}
+
+
+
+

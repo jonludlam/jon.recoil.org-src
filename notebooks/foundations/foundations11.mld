@@ -1,0 +1,444 @@
+{0 Lecture 11: Elements of Procedural Programming}
+
+{@meta hidden[{}]}
+
+{1 Procedural Programming}
+{ul {- Procedural programs can change the machine state.
+}{- They can interact with its environment
+}{- They use control structures like branching, iteration and procedures.
+}}
+
+They use data abstractions of the computer’s memory:
+{ul {- {e references} to memory cells
+}{- {e arrays} that are blocks of memory cells
+}{- {e linked structures} such as {e linked lists}
+}}
+
+Procedural programming is programming in the traditional sense of the word.  A
+program {e state} is repeatedly transformed by the execution of
+{e commands} or {e statements}.  A state change might be local to the
+machine and consist of updating a variable or array.  A state change might
+consist of sending data to the outside world.  Even reading data counts as a
+state change, since this act normally removes the data from the environment.
+
+Procedural programming languages provide primitive commands and control
+structures for combining them.  The primitive commands include
+{e assignment} for updating variables, and various {e input/output}
+commands for communication.  Control structures include [if] and
+[match] constructs for conditional execution, and repetitive constructs
+such as [while].  Programmers can package up their own commands as
+{e procedures} taking arguments.  The need for such “subroutines” was
+evident from the earliest days; they represent one of the first
+examples of abstraction in programming languages.
+
+OCaml makes no distinction between commands and expressions. OCaml provides built-in
+‘functions’ to perform assignment and communication, and these can be used
+in the traditional (procedural) style. OCaml programmers often follow a
+functional style for most internal computations and use imperative features
+mainly for communication with the outside world.
+
+{1 OCaml Primitives for References}
+
+{table
+{tr {th Syntax}{th Effect}}
+{tr {td [ref E]}{td {e create} a reference with {e initial contents} = value of [E]}}
+{tr {td [!P]}{td return {e current contents} of reference [P]}}
+{tr {td [P := E]}{td {e update} contents of [P] to value of [E]}}
+}
+
+The above text presents the OCaml primitives, but most languages have analogues of
+them, often heavily disguised.  We need a means of creating references (or
+allocating storage), getting at the current contents of a reference cell, and
+updating that cell.
+
+The function [ref] creates references (also called
+“locations”).  Calling [ref] allocates a new location in memory.
+Initially, this location holds the value given by
+expression $E$.
+
+The function [!], when applied to a reference, returns its contents.
+This operation is called {e dereferencing}.  Clearly [!] is not a
+mathematical function; its result depends upon the store.
+
+The assignment [P:=E] evaluates expression $P$, which must return a
+reference $p$, and $E$.  It stores at address $p$ the value of $E$.
+Syntactically, [:=] is a function and [P:=E] is an
+expression, even though it updates the store.  Like many functions that change
+the state, it returns the value [()] of type [unit].
+
+If $\tau$ is some OCaml type, then $\tau$ [ref] is the type of references
+to cells that can hold values of $\tau$.  Please do not confuse the type
+[ref] with the function [ref].  This table of the primitive
+functions and their types might be useful:
+
+{table
+{tr {th Syntax}{th OCaml Type}}
+{tr {td [ref]}{td ['a -> 'a ref]}}
+{tr {td [!]}{td ['a ref -> 'a ]}}
+{tr {td [:=]}{td ['a ref -> 'a -> unit]}}
+}
+
+{1 Trying Out References}
+
+{@ocaml[
+# let p = ref 5 (* create a reference *)
+val p : int ref = {contents = 5}
+# p := !p + 1   (* p now holds value 6 *)
+- : unit = ()
+# let ps = [ ref 77; p ]
+val ps : int ref list = [{contents = 77}; {contents = 6}]
+# List.hd ps := 3
+- : unit = ()
+# ps
+- : int ref list = [{contents = 3}; {contents = 6}]
+]}
+
+The first line declares [p] to hold a reference to an integer,
+initially 5.  Its type is [int ref], not just [int], so it
+admits assignment.  Assignment never changes [let] bindings: they are
+{e immutable}.  The identifier [p] will always denote the reference
+mentioned in its declaration unless superseded by a new usage of [p].
+Only the {e contents} of the reference is mutable.
+
+OCaml displays a reference value as [{contents=v}], where value $v$ is the
+contents.  This notation is readable but gives us no way of telling whether
+two references holding the same value are actually the same reference.  To
+display a reference as a machine address has obvious drawbacks!
+
+In the first assignment, the expression [!p] yields the reference’s
+current contents, namely 5.  The assignment changes the contents of [p]
+to 6.  Most languages do not have an explicit dereferencing operator
+(like [!]) because of its inconvenience.  Instead, by convention,
+occurrences of the reference on the {e left-hand} side of the [:=]
+denote locations and those on the {e right-hand} side denote the contents.
+A special ‘address of’ operator may be available to override the convention
+and make a reference on the right-hand side to denote a location.  Logically
+this is a mess, but it makes programs shorter.
+
+The list [ps] is declared to hold a new reference (initially
+containing 77) as well as [p].  Then the new reference is
+updated to hold 3.  The assignment to [hd ps] does {e not}
+update [ps], only the contents of a reference in that list.
+
+{1 Commands: Expressions with Effects}
+{ul {- Basic commands update references, write to files, etc.
+}{- $C_1 ; \ldots ; C_n$ causes a series of expressions to be evaluated and returns the value of $C_n$.
+}{- A typical command returns the empty tuple: [()]
+}{- [if] $B$ [then] $C_1$ [else] $C_2$ behaves like the traditional control structure if $C_1$ and $C_2$ have effects.
+}{- Other OCaml constructs behave naturally with commands, including [match] expressions and recursive functions.
+}}
+
+We use the term {e command} informally to refer to an expression that has an
+effect on the state. All expressions denote some value, but they can return
+[()], which conveys no actual information.
+
+We need a way to execute one command after another.
+The construct $C_1 ; \ldots ; C_n$ evaluates the expressions $C_1$
+to $C_n$ in the order given and returns the value of $C_n$.  The values
+of the other expressions are discarded; their only purpose is to change the
+state.
+
+Commands may be used with [if] and [match] much as in conventional languages.
+OCaml functions play the role of procedures.
+
+Other languages that combine the functional and imperative programming
+paradigms include Lisp (and its dialect Scheme), Scala, and even a
+systems programming language, BLISS (now long extinct).
+
+{1 Iteration: the [while] command}
+
+{@ocaml[
+# let tlopt = function
+  | [] -> None
+  | _::xs -> Some xs
+val tlopt : 'a list -> 'a list option = <fun>
+# let length xs =
+    let lp  = ref xs in (* list of uncounted elements *)
+    let np  = ref 0  in (* accumulated count *)
+    let fin = ref false in
+    while not !fin do
+      match tlopt !lp with
+      | None -> fin := true
+      | Some xs ->
+          lp := xs;
+          np := 1 + !np
+    done;
+    !np (* the final count is returned *)
+val length : 'a list -> int = <fun>
+]}
+
+Once we can change the state, we need to do so repeatedly.  Recursion can
+serve this purpose, but having to declare a procedure for every loop is
+clumsy, and compilers for conventional languages seldom exploit
+tail-recursion.
+
+Early programming languages provided little support for repetition.  The
+programmer had to set up loops using goto commands, exiting the loop using
+another goto controlled by an [if].  Modern languages provide a
+confusing jumble of looping constructs, the most fundamental of which is
+[while B do C].  The boolean expression $B$ is evaluated,
+and if true, command $C$ is executed and the command repeats.  If $B$
+evaluates to false then the [while] command terminates, perhaps without
+executing $C$ even once.
+
+OCaml’s main looping construct is [while], which returns the value [()].  The
+function [length] declares references to hold the list under
+examination ([lp]) and number of elements counted so far ([np]) as well
+as whether the end of the list has been reached (the boolean reference [fin]).
+While the list is non-empty, we skip over one more element (by setting it to
+its tail) and count that element.
+
+The body of the [while] loop first checks to see if the end of the list has
+been reached, in which case it sets the [fin] variable to true.  If there is a
+tail value, then two assignments are executed in sequence.  The [lp] reference
+is set to the tail of the list, and the [np] reference integer is incremented
+by one.  When the while loop terminates due to the [fin] variable being set to
+true, the expression [!np] returns the computed length as the function’s
+result.
+
+{1 Private, Persistent References}
+
+{@ocaml[
+# exception TooMuch of int
+exception TooMuch of int
+# let makeAccount initBalance =
+    let balance = ref initBalance in
+    let withdraw amt =
+       if amt > !balance then
+         raise (TooMuch (amt - !balance))
+       else begin
+         balance := !balance - amt;
+         !balance
+       end
+    in
+    withdraw
+val makeAccount : int -> int -> int = <fun>
+]}
+
+As you may have noticed, OCaml’s programming style looks clumsy compared with
+that of languages like C.  OCaml omits the defaults and abbreviations they
+provide to shorten programs.  However, OCaml’s explicitness makes it ideal for
+teaching the fine points of references and arrays.  OCaml’s references are more
+flexible than those found in other languages.
+
+The function [makeAccount] models a bank.  Calling the function with a
+specified initial balance creates a new reference [balance]) to
+maintain the account balance and returns a function ([withdraw]) having
+sole access to that reference.  Calling [withdraw] reduces the balance
+by the specified amount and returns the new balance.  You can pay money in by
+withdrawing a negative amount.  The [if]-construct prevents the account
+from going overdrawn, raising an exception.
+
+Look at the $\tt (E_1; E_2)$ construct in the {e else} part above.
+The first expression updates the account balance and returns the trivial
+value ().  The second expression, [!balance], returns the current
+balance but does not return the reference itself: that would allow
+unauthorised updates.
+
+This example is based on one by Dr A C Norman.
+
+{1 Two Bank Accounts}
+
+{@ocaml[
+# let student = makeAccount 500
+val student : int -> int = <fun>
+# let director = makeAccount 4000000;
+val director : int -> int = <fun>
+# student 5        (* coach fare *)
+- : int = 495
+# director 150000  (* Tesla *)
+- : int = 3850000
+# student 500      (* oh oh *)
+Exception: TooMuch 5.
+]}
+
+Each call to [makeAccount] returns a copy of [withdraw] holding
+a {e fresh} instance of the reference [balance].  As with a real bank
+pass-book, there is no access to the account balance except via the
+corresponding [withdraw] function.  If that function is discarded, the
+reference cell becomes unreachable; the computer will eventually reclaim it,
+just as banks close down dormant accounts.
+
+Here we see two people managing their accounts.  For better or worse, neither
+can take money from the other.
+
+We could generalise [makeAccount] to return several functions that
+jointly manage information held in shared references.  The functions might be
+packaged using OCaml records, which are not discussed in this course.
+Most procedural languages do not properly support the concept of private
+references, although {e object-oriented} languages take them as a basic theme.
+
+{1 OCaml Primitives for Arrays}
+
+{@ocaml[
+# [|"a"; "b"; "c"|] (* allocate a fresh string array *)
+- : string array = [|"a"; "b"; "c"|]
+# Array.make 3 'a'   (* array[3] with cell containing 'a' *)
+- : char array = [|'a'; 'a'; 'a'|]
+# let aa = Array.init 5 (fun i -> i * 10) (* array[5] initialised to (fun i) *)
+val aa : int array = [|0; 10; 20; 30; 40|]
+# Array.get aa 3  (* retrieve the 4th cell in the array *)
+- : int = 30
+# Array.set aa 3 42 (* set the 4th cell's value to 42 *)
+- : unit = ()
+]}
+
+There are many other array operations in the [Array] module in the OCaml standard
+library.
+
+{@ocaml[
+# Array.make
+- : int -> 'a -> 'a array = <fun>
+# Array.init
+- : int -> (int -> 'a) -> 'a array = <fun>
+# Array.get
+- : 'a array -> int -> 'a = <fun>
+# Array.set
+- : 'a array -> int -> 'a -> unit = <fun>
+]}
+
+OCaml arrays are like references that hold several elements instead of one.  The
+elements of an $n$-element array are designated by the integers from 0
+to $n-1$.  The $i$th array element is usually written $A.(i)$.
+If $\tau$ is a type then $\tau$ [array] is the
+type of arrays (of any size) with elements from $\tau$.
+
+Calling [Array.init n f] creates an array of the size specified in $n$
+by function $f$.  Initially, element $A.(i)$ holds the value of $f(i)$ for $i=0$, \ldots,~$n-1$.
+Like [ref], it allocates mutable storage to hold the specified values.
+
+Calling [Array.get A i] returns the contents of $A.(i)$.
+
+Calling [Array.set A i E] modifies the array $A$ by storing the
+value of $E$ as the new contents of $A\[i\]$; it returns [()] as its value.
+
+OCaml’s arrays are much safer than C’s. In C, an array is nothing more than an
+address indicating the start of a storage area. Nothing indicates the size of
+the area.  Therefore C programs are vulnerable to {e buffer overrun attacks:} an
+attacker sends more data than the receiving program expects, overrunning the
+area of storage set aside to hold it. The attack eventually overwrites the
+program itself, replacing it with code controlled by the attacker.
+
+{1 Array Examples}
+
+In the following session, the identifier [ar] is bound to an array of 20 elements, which
+are initially set to the squares of their subscripts.  The array’s third
+element (which actually has subscript 2) is inspected and found to be four. The
+second call to [Array.get] supplies a subscript that is out of range, so OCaml
+rejects it.
+
+{@ocaml[
+# let ar = Array.init 20 (fun i -> i * i)
+val ar : int array =
+  [|0; 1; 4; 9; 16; 25; 36; 49; 64; 81; 100; 121; 144; 169; 196; 225; 256;
+    289; 324; 361|]
+# Array.get ar 2
+- : int = 4
+# Array.get ar 20
+Exception: Invalid_argument "index out of bounds".
+# Array.set ar 2 33; ar
+- : int array =
+[|0; 1; 33; 9; 16; 25; 36; 49; 64; 81; 100; 121; 144; 169; 196; 225; 256;
+  289; 324; 361|]
+]}
+
+By calling [Array.set], we then modify the element with subscript 2. Note
+however that we cannot modify the array’s length. If we outgrow the array, we
+have to create a new one, copy the data into it, and then forget the old array.
+Typically the new array would be double the size of the old one, so that the
+cost of copying is insignificant.
+
+OCaml provides numerous operators for modifying, computing over and searching in
+arrays. Many are analogous to functions on lists. For example,
+[Array.exists] takes a boolean-valued function and returns [true] if an
+array element satisfies it.
+
+{@ocaml[
+# Array.exists (fun i -> i > 200) ar
+- : bool = true
+# Array.exists (fun i -> i < 0) ar
+- : bool = false
+]}
+
+{1 References: OCaml {e vs} conventional languages}
+{ul {- We must write [!p] to get the {e contents} of [p]
+}{- We write just [p] for the {e address} of [p]
+}{- We can store private reference cells (like [balance]) in functions---analogous to elements of {e object-oriented programming}
+}{- OCaml’s assignment syntax is $\tt V , := , E$ instead of $V$ = $E$
+}{- OCaml has few control structures: [while], [match], [if] and [for] (the latter is not covered in this course)
+}{- OCaml has syntax for updating an array via the [a.(i) <- v] syntax which is the same as [Array.set a i v].
+}}
+
+Conventional syntax for variables and assignments has hardly changed since
+Fortran, the first high-level language. In conventional languages,
+virtually all variables can be updated.  We declare something like
+[p: int], mentioning no reference type even if the language provides
+them.  If we do not specify an initial value, we may get whatever bits were
+previously at that address.  Illegal values arising from uninitialised
+variables can cause errors that are almost impossible to diagnose.
+
+Dereferencing operators (like OCaml’s [!]) are especially unpopular, because
+they clutter the program text. Virtually all programming languages make dereferencing
+implicit (that is, automatic).
+
+It is generally accepted these days that a two-dimensional array $A$ is nothing
+but an array of arrays.  An assignment to such an array is typically written
+something like $A\[i,j\] \{:=\} x$; in C, the syntax is [A[i][j] = x]. Higher
+dimensions are treated analogously.  The corresponding OCaml code can either
+declare an array of arrays, or use the [A.(i)] syntax to calculate the linear
+offset into a single array.
+
+You can use the constructs we have learnt to easily create linked (mutable) lists as
+an alternative to arrays.
+
+{@ocaml[
+# type 'a mlist =
+  | Nil
+  | Cons of 'a * 'a mlist ref
+type 'a mlist = Nil | Cons of 'a * 'a mlist ref
+]}
+
+It is worth mentioning that OCaml’s references fully suffice for coding the sort of linked data structures
+taught in algorithms courses, and is illustrated in the figure above. The
+programming style is a little different from the usual, but the principles are
+the same.  OCaml also provides comprehensive input/output primitives for various
+types of file and operating system.
+
+OCaml’s system of modules include {e structures,} which can be seen as encapsulated
+groups of declarations, and {e signatures,} which are specifications of
+structures listing the name and type of each component.  Finally, there are
+{e functors,} which are analogous to functions that combine a number of argument
+structures, and which can be used to plug program components together. These
+primitives are useful for managing large programming projects.
+
+{2 Exercise 11.1}
+
+Comment, with examples, on the differences between an [int ref list] and an [int list ref].
+
+{2 Exercise 11.2}
+
+Write a version of function [power] (Lecture 1) using [while] instead of recursion.
+
+{2 Exercise 11.3}
+
+What is the effect of $\tt while , C_1; ; B , do , C_2 , done$ ?
+
+{2 Exercise 11.4}
+
+Write a function to exchange the values of two references, [xr] and [yr].
+
+{2 Exercise 11.5}
+
+Arrays of multiple dimensions are represented in OCaml by arrays of arrays. Write functions to
+(a) create an $n\times n$ identity matrix, given $n$, and
+(b) to transpose an $m\times n$ matrix. Identity matrices have the following form:
+$$
+\left( \{
+\begin\{array\}\{cccc\}
+1 & 0 &  \cdots  & 0  \
+0 & 1 &  \cdots  & 0  \
+\vdots  &  \vdots  &  \ddots  &  \vdots   \
+0 & 0 &  \cdots  & 1  \
+\end\{array\}
+\} \right)
+$$

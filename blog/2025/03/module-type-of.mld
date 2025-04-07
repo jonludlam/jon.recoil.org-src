@@ -1,0 +1,136 @@
+{0 The Road to Odoc 3: Module Type Of}
+
+{@meta hidden[
+{}
+]}
+
+There are {{:https://discuss.ocaml.org/t/ann-odoc-3-beta-release/16043}many new and improved features}
+that Odoc 3 brings, but there are also a large number of bugfixes. I thought I'd write about one in
+particular here, an {{:https://github.com/ocaml/odoc/pull/1081}overhaul of "module type of"} that
+landed in May 2024.
+
+{1 Module Type Of}
+module type of is a language feature of OCaml allowing one to recover the signature of an existing
+module. For example, if I had a module [X]:
+
+{@ocamltop[
+# module X = struct
+    type t = Foo | Bar
+  end;;
+  module X : sig type t = Foo | Bar end
+]}
+
+then I can get back the signature of [X] using [module type of]:
+
+{@ocamltop[
+# module type Xsig = module type of X;;
+  module type Xsig = sig type t = Foo | Bar end
+]}
+
+which can be very useful if you’re trying to
+{{:https://discuss.ocaml.org/t/extend-existing-module/1389}extend existing modules} amongst other things.
+
+OCaml and Odoc treat module type of in somewhat different ways. OCaml internally expands the expression
+immediately it sees it, and effectively replaces it with the signature - ie, in the above example Xsig
+is now a signature, not a module type of expression.
+
+In contrast, Odoc would like to keep track of the fact that this signature came from a [module type of]
+expression, as it’s very useful to know. If you’re extending a module, your signature might look like:
+
+{@ocamltop[
+# module type UnitExtended = sig
+    include module type of Unit
+    val extra_unit_function : unit -> unit
+  end;;
+  module type UnitExtended =
+    sig
+      type t = unit = ()
+      val equal : t -> t -> bool
+      val compare : t -> t -> int
+      val to_string : t -> string
+      val extra_unit_function : unit -> unit
+    end
+]}
+
+The documentation we produce will expand the contents of the [include] statement, but keep track of the
+fact that it came from a [module type of] expression so the reader can see where these signature items came
+from. In practice, you'd probably want to use [module type of struct include Unit end], which is a bit
+different from simply [module type of Unit], and I'll talk about this at some point in a future post.
+
+{1 The problem}
+We run into difficulties as soon as we introduce another language feature that operates on signatures:
+with. Let’s start with a module type [S]:
+
+{@ocamltop[
+# module type S = sig
+    module X : sig
+      type t = int
+    end
+
+    module type Y =
+      module type of X
+  end;;
+  module type S =
+    sig
+      module X : sig type t = int end
+      module type Y = sig type t = int end
+    end
+]}
+
+We’ll now define a new module [X2] that we intend to use as a replacement for [X]:
+
+{@ocamltop[
+# module X2 = struct
+    type t = int
+    type u = float
+  end;;
+  module X2 : sig type t = int type u = float end
+]}
+
+Now we’ll define a new module type [T] which is [S] but with [X] replaced:
+
+{@ocamltop[
+# module type T = S with module X := X2;;
+  module type T = sig module type Y = sig type t = int end end
+]}
+
+Here you can see that OCaml has expanded the [module type of] expressions and told us the computed signature.
+The interesting thing here is that in module type [T], module type [Y] only has a type [t] in it, not a
+type [u]. As above, Odoc wants to keep the [module type of] expression so the reader can tell where module
+type [Y] came from. However, the substitution would do a different thing in this case - we would have
+the following:
+
+{@ocamltop[
+# module type T = sig
+    module type Y = module type of X2
+  end;;
+  module type T = sig module type Y = sig type t = int type u = float end end
+]}
+
+and the expansion of this would then clearly have both types [t] and [u] in it.
+
+So now Odoc has two problems: We need to compute the correct signature, and we need to be able to
+describe how we computed it.
+
+{1 The solution}
+The previous solution to this was to have a ‘phase 0’ of odoc which would compute the expansions
+of all module type of expressions before doing any other work. This was necessary because of a
+‘simplfying’ assumption in how we handled the typing environment. The new, simpler approach was
+to calculate the expansion during the normal flow of work, and never to attempt to recalculate
+it, but simply operate on the signature. This was a nice big simplification and optimisation that
+removed a few corner cases in the previous code (including an
+{{:https://github.com/ocaml/odoc/blob/v2.4/src/xref2/type_of.ml#L167-L174}infinite loop} that we
+{e hoped} always terminated…!)
+
+The second issue was how to describe it. We still want it clear that this signature was derived
+from another, but it’s clear we can’t honestly say that in the above example that it’s [module type
+of X2]. The answer is that we have applied a transparent ascription to the signature. Essentially,
+the signature is [X2] but constrained to only have the fields of [X].
+
+This is not a current feature of OCaml, though Jane Street has
+{{:https://blog.janestreet.com/plans-for-ocaml-408/}done some work} on this, including declaring
+the syntax: [X2 <: X]. However, there’s another interesting wrinkle here. [X] is a module defined in
+the module type [S], so it’s not possible to write a valid OCaml path that points to it – [S.X] has no
+meaning. In addition, the right-hand side of the [<:] operator should be a module type, so we’d
+actually need to write [X2 <: module type of S.X] . We’re still figuring out the right thing to do
+here, so for now Odoc 3 will still pretend that it’s simply [module type of X2].

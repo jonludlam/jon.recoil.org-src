@@ -1,0 +1,410 @@
+{0 Lecture 2: Recursion and Efficiency}
+
+{@meta hidden[{}]}
+
+{1 Expression Evaluation}
+
+Expression evaluation concerns expressions and the values they return. This
+view of computation may seem to be too narrow. It is certainly far removed from
+computer hardware, but that can be seen as an advantage. For the traditional
+concept of computing solutions to problems, expression evaluation is entirely
+adequate.
+
+Starting with {m E_0 }, the expression {m E_i } is reduced to {m E_{i+1} } until this
+process concludes with a value {m v }.  A {e value} is something like a number
+that cannot be further reduced.
+
+We write {m E \rightarrow E' } to say that {m E } is {e reduced} to {m E' }.
+Mathematically, they are equal: {m E=E' }, but the computation goes from {m E } to
+{m E' } and never the other way around.
+
+Computers also interact with the outside world.  For a start, they need some
+means of accepting problems and delivering solutions.  Many computer systems
+monitor and control industrial processes.  This role of computers is familiar
+now, but was never envisaged in the early days. Computer pioneers focused on
+mathematical calculations.  Modelling interaction and control requires a notion
+of {e states} that can be observed and changed.  Then we can consider
+updating the state by assigning to variables or performing input/output,
+finally arriving at conventional programs as coded in C, for instance.
+
+For now, we remain at the level of expressions, which is usually termed
+{e functional programming}.
+
+{1 Summing the first {e n} integers}
+
+{@ocamltop autorun[
+# let rec nsum n =
+    if n = 0 then
+      0
+    else
+      n + nsum (n - 1);;
+  val nsum : int -> int = <fun>
+]}
+
+The function call [nsum n] computes the sum [1 +] … [+ nz] rather naively, hence the
+initial [n] in its name:
+
+{math
+\begin{aligned}
+\text{nsum } 3 \Rightarrow & 3 + (\text{nsum } 2) \\
+\Rightarrow & 3 + (2 + (\text{nsum } 1) \\
+\Rightarrow & 3 + (2 + (1 + \text{nsum } 0)) \\
+\Rightarrow & 3 + (2 + (1 + 0)) 
+\end{aligned}
+}
+
+The nesting of parentheses is not just an artifact of
+our notation; it indicates a real problem.  The function gathers up a
+collection of numbers, but none of the additions can be performed until [nsum 0] is reached.  Meanwhile, the computer must store the numbers in an internal
+data structure, typically the {e stack}.  For large [n], say [nsum 10000], the
+computation might fail due to stack overflow.
+
+We all know that the additions can be performed as we go along.  How do we
+make the computer do that?
+
+{1 Iteratively summing the first [n] integers}
+
+{@ocamltop autorun[
+# let rec summing n total =
+    if n = 0 then
+      total
+    else
+      summing (n - 1) (n + total);;
+  val summing : int -> int -> int = <fun>
+]}
+
+Function [summing] takes an additional argument: a running total.  If
+[n] is zero then it returns the running total; otherwise, [summing]
+adds to it and continues.  The recursive calls do not nest; the additions are
+done immediately.
+
+A recursive function whose computation does not nest is called
+{e iterative} or {e tail-recursive}. Many functions can be made iterative by
+introducing an argument analogous to [total], which is often called an
+{e accumulator}.
+
+The gain in efficiency is sometimes worthwhile and sometimes not.  The function
+[power] is not iterative because nesting occurs whenever the exponent is odd.
+Adding a third argument makes it iterative, but the change complicates the
+function and the gain in efficiency is minute; for 32-bit integers, the maximum
+possible nesting is 30 for the exponent {m 2^{31}-1 }.
+
+{1 Recursion {e vs} Iteration}
+{ul {- “Iterative” normally refers to a loop, coded using [while] for example (see the final lecture)
+}{- Tail-recursion is only efficient if the compiler detects it
+}{- Mainly it saves space (memory), though iterative code can also run faster
+}{- Do not make programs iterative unless the gain is worth it
+}}
+
+A {{: https://en.wikipedia.org/wiki/Structure_and_Interpretation_of_Computer_Programs} classic book}
+by Abelson and Sussman, which describes the Lisp dialect known as Scheme,
+used {e iterative} to mean {e tail-recursive}. Iterative functions produce computations
+resembling those that can be done using while-loops in conventional languages.
+
+Many algorithms can be expressed naturally using recursion, but only awkwardly
+using iteration. There is a story that Dijkstra sneaked recursion into Algol-60
+by inserting the words “any other occurrence of the procedure name denotes
+execution of the procedure.” By not using the word “recursion”, he managed to
+slip this amendment past sceptical colleagues.
+
+Obsession with tail recursion leads to a coding style in which functions
+have many more arguments than necessary.  Write straightforward code first,
+avoiding only gross inefficiency.  If the program turns out to be too slow,
+tools are available for pinpointing the cause.  Always remember KISS (Keep
+It Simple, Stupid).
+
+I hope you have all noticed by now that the summation can be done even more
+efficiently using the arithmetic progression formula:
+
+{math  1+\cdots+n = n(n+1)/2  }
+
+{1 Silly Summing the First {e n} Integers}
+
+{@ocamltop autorun[
+# let rec sillySum n =
+    if n = 0 then
+      0
+    else
+      n + (sillySum (n - 1) + sillySum (n - 1)) / 2;;
+  val sillySum : int -> int = <fun>
+]}
+
+The function calls itself {m 2^n } times!  Bigger inputs mean higher costs---but
+what’s the growth rate?
+
+Now let us consider how to estimate various costs associated with a program.
+{e Asymptotic complexity} refers to how costs---usually time or space---grow with
+increasing inputs. Space complexity can never exceed time complexity, for it
+takes time to do anything with the space.  Time complexity often greatly
+exceeds space complexity.
+
+The function [sillySum] calls itself twice in each recursive step.  This
+function is contrived, but many mathematical formulas refer to a particular
+quantity more than once.  In OCaml, we can create a local binding to a computed
+value using the {e local declaration} syntax. In the following expression, [y] is
+computed once and used twice:
+
+{@ocamltop autorun[
+# let x = 2.0 in
+    let y = Float.pow x 20.0 in
+    y *. (x /. y);;
+  - : float = 2.
+]}
+
+You can read [let x = e1 in e2] as assigning (or "binding") the name [x] with
+the value of [e1] into [e2]. Any use of [x] within [e2] will have the value of [e1],
+and [x] will only be visible in subexpressions into which it has been bound.
+
+Why do we need let bindings? Fast hardware does not make good algorithms unnecessary.
+On the contrary, faster hardware magnifies the superiority of better algorithms.
+Typically, we want to handle the largest inputs possible.  If we double our processing power,
+what do we gain?  How much can we increase {m n }, the input to our function?
+
+With [sillySum], we can only go from {m n } to {m n+1 }.  We are limited to this
+modest increase because the function’s running time is proportional to {m 2^n }.
+With the function [npower] defined in the previous section, we can go from {m n }
+to {m 2n }: we can handle problems twice as big.  With [power] we can do much
+better still, going from {m n } to {m n^2 }.
+
+The following table (excerpted from {{: https://archive.org/details/designanalysisof00ahoarich} a 50-year-old book}!)
+illustrates the effect of various time complexities.  The left-hand column (dubbed "complexity")
+is defind as how many milliseconds are required to process an input of size {m n }.
+The other entries show the maximum size of {m n } that can be processed in the given time (one
+second, minute or hour).
+
+{table
+{tr {th complexity}{th 1 second}{th 1 minute}{th 1 hour}{th gain}}
+{tr {td {m n }}{td 1000}{td 60 000}{td 3 600 000}{td {m \times 60 }}}
+{tr {td {m n \log n }}{td 140}{td 4 895}{td 204 095}{td {m \times 41 }}}
+{tr {td {m n^{2} }}{td 31}{td 244}{td 1 897}{td {m \times 8 }}}
+{tr {td {m n^{3} }}{td 10}{td 39}{td 153}{td {m \times 4 }}}
+{tr {td {m 2^{n} }}{td 9}{td 15}{td 21}{td {m +6 }}}
+}
+
+The table illustrates how large an input can be processed as a function
+of time.  As we increase the computer time per input from one second to one
+minute and then to one hour, the size of the input increases accordingly.
+
+The top two rows (complexities {m n } and {m n \lg n }) increase rapidly: for {m n }, by
+a factor of 60 per column.  The bottom two start out close together, but {m n^3 } (which
+grows by a factor of 3.9) pulls well away from {m 2^n } (whose growth is only
+additive).  If an algorithm’s complexity is exponential then it can never
+handle large inputs, even if it is given huge resources.  On the other hand,
+suppose the complexity has the form {m n^c }, where {m c } is a constant.  (We say
+the complexity is {e polynomial}.)  Doubling the argument then increases the
+cost by a constant factor.  That is much better, though if {m c>3 } the algorithm
+may not be considered practical.
+
+{1 Comparing Algorithms: O Notation}
+{ul {- Formally, define {m f(n) = O(g(n)) } provided {m |f(n)| \leq c|g(n)| } as {m n\to\infty }
+}{- {m |f(n)| } is bounded for some constant {m c } and all {e sufficiently large} {m n }.
+}{- Intuitively, look at the {e most significant} term.
+}{- Ignore {e constant factors} as they seldom dominate and are often transitory
+}}
+
+For example: consider {m n^2 } instead of {m 3n^2+34n+433 }.
+
+The cost of a program is usually a complicated formula.  Often we should
+consider only the most significant term.  If the cost is {m n^2 + 99n + 900 }
+for an input of size {m n }, then the {m n^2 } term will eventually dominate,
+even though {m 99n } is bigger for {m n<99 }.
+The constant term {m 900 } may look big, but it is soon dominated by {m n^2 }.
+
+Constant factors in costs can be ignored unless they are large.  For one thing,
+they seldom make a difference: {m 100n^2 } will be better than {m n^3 } in the long
+run: or {e asymptotically} to use the jargon.  Moreover, constant factors are
+seldom stable.  They depend upon details such as which hardware, operating
+system or programming language is being used.  By ignoring constant factors, we
+can make comparisons between algorithms that remain valid in a broad range of
+circumstances.
+
+The “Big O” notation is commonly used to describe efficiency---to be precise,
+{e asymptotic complexity}.  It concerns the limit of a function as its
+argument tends to infinity.  It is an abstraction that meets the informal
+criteria that we have just discussed.
+In the definition, {e sufficiently large} means there is some constant {m n_0 }
+such that {m |f(n)|\leq c|g(n)| } for all {m n } greater than {m n_0 }.  The
+role of {m n_0 } is to ignore finitely many exceptions to the bound, such as the
+cases when {m 99n } exceeds {m n^2 }.
+
+{1 Simple Facts About O Notation}
+
+{math
+\begin{aligned}
+O(2g(n)) & \text{ is the same as } O(g(n)) \\
+O(\log_{10}n) & \text{ is the same as } O(\ln n)  \\
+O(n^2+50n+36) & \text{ is the same as } O(n^2) \\
+O(n^2) & \text{ is contained in }  O(n^3) \\
+O(2^n) & \text{ is contained in }  O(3^n)  \\
+O(\log n) & \text{ is contained in } O(\sqrt n)
+\end{aligned}
+}
+
+{m O } notation lets us reason about the costs of algorithms easily.
+{ul {- Constant factors such as the {m 2 } in {m O(2g(n)) } drop out: we can use {m O(g(n)) } with twice the value of {m c } in the definition.
+}{- Because constant factors drop out, the base of logarithms is irrelevant.
+}{- Insignificant terms drop out.  To see that {m O(n^2+50n+36) } is the same as {m O(n^2) }, consider that {m n^2+50n+36/n^2 } converges to 1 for increasing {m n }. In fact, {m n^2+50n+36 \le 2n^2 } for {m n\ge 51 }, so can double the constant factor
+}}
+
+If {m c } and {m d } are constants (that is, they are independent of {m n }) with {m 0 < c < d } then
+{ul {- {m O(n^c) } is contained in {m O(n^d) }
+}{- {m O(c^n) } is contained in {m O(d^n) }
+}{- {m O(\log n) } is contained {m in O(n^c) }
+}}
+
+To say that {m O(c^n) } {e is contained in} {m O(d^n) } means that the former gives
+a tighter bound than the latter.  For example, if {m f(n)=O(2^n) } then
+{m f(n)=O(3^n) } trivially, but the converse does not hold.
+
+{1 Common Complexity Classes}
+{ul {- {m O(1) } is {e constant}
+}{- {m O(\log n) } is {e logarithmic}
+}{- {m O(n) } is {e linear}
+}{- {m O(n\log n) } is {e quasi-linear}
+}{- {m O(n^2) } is {e quadratic}
+}{- {m O(n^3) } is {e cubic}
+}{- {m O(a^n) } is {e exponential} (for fixed {m a })
+}}
+
+Logarithms grow very slowly, so {m O(\log n) } complexity is excellent.  Because
+{m O } notation ignores constant factors, the base of the logarithm is
+irrelevant!
+
+Under linear we might mention {m O(n\log n) }, which occasionally is called
+{e quasilinear} and which scales up well for large {m n }.
+
+An example of quadratic complexity is matrix addition: forming the sum of two
+{m n\times n } matrices obviously takes {m n^2 } additions.  Matrix
+multiplication is of cubic complexity, which limits the size of matrices that
+we can multiply in reasonable time.  An {m O(n^{2.81}) } algorithm exists, but it
+is too complicated to be of much use, even though it is theoretically better.
+
+An exponential growth rate such as {m 2^n } restricts us to small values of {m n }.
+Already with {m n=20 } the cost exceeds one million.  However, the worst case
+might not arise in normal practice.  OCaml type-checking is exponential in the
+worst case, but not for ordinary programs.
+
+{1 Sample costs in O notation}
+
+Recall that [npower] computes {m x^n }
+by repeated multiplication while [nsum] naively computes the sum
+{m 1+\cdots+n }.  Each obviously performs {m O(n) } arithmetic operations.  Because
+they are not tail recursive, their use of space is also {m O(n) }.  The function
+[summing] is a version of [nsum] with an accumulating argument;
+its iterative behaviour lets it work in constant space.  {m O } notation spares
+us from having to specify the units used to measure space.
+
+{table
+{tr {th Function}{th Time}{th Space}}
+{tr {td npower, nsum}{td O({m n })}{td O({m n })}}
+{tr {td summing}{td O({m n })}{td O({m 1 })}}
+{tr {td {m n(n+1)/2 }}{td O({m 1 })}{td O({m 1 })}}
+{tr {td power}{td O({m \log~n })}{td O({m \log~n })}}
+{tr {td sillySum}{td O({m 2^n })}{td O({m n })}}
+}
+
+Even ignoring constant factors, the units chosen can influence the result.
+Multiplication may be regarded as a single unit of cost.  However, the cost of
+multiplying two {m n }-digit numbers for large {m n } is itself an important
+question, especially now that public-key cryptography uses numbers hundreds of
+digits long.
+
+Few things can {e really} be done in constant time or stored in constant
+space.  Merely to store the number {m n } requires {m O(\log n) } bits.  If a
+program cost is {m O(1) }, then we have probably assumed that certain operations
+it performs are also {m O(1) }---typically because we expect never to exceed the
+capacity of the standard hardware arithmetic.
+
+With [power], the precise number of operations depends upon {m n } in a
+complicated way, depending on how many odd numbers arise, so it is convenient
+that we can just write {m O(\log n) }.  An accumulating argument could reduce its
+space cost to {m O(1) }.
+
+{1 Some Simple Recurrence Relations}
+
+Consider a function {m T(n) } that has a cost we want to bound using {m O } notation.
+A typical {e base case} is {m T(1)=1 }.  Some {e recurrences} are:
+
+{table
+{tr {th Equation}{th Complexity}}
+{tr {td {m T(n+1) = T(n)+1 }}{td {m O(n) }}}
+{tr {td {m T(n+1) = T(n)+n }}{td {m O(n^2) }}}
+{tr {td {m T(n) = T(n/2)+1 }}{td {m O(\log n) }}}
+{tr {td {m T(n) = 2T(n/2)+n }}{td {m O(n\log n) }}}
+}
+
+To analyse a function, inspect its OCaml declaration.  Recurrence equations for
+the cost function {m T(n) } can usually be read off.  Since we ignore constant
+factors, we can give the base case a cost of one unit.  Constant work done in
+the recursive step can also be given unit cost; since we only need an upper
+bound, this unit represents the larger of the two actual costs.  We could use
+other constants if it simplifies the algebra.
+
+For example, recall our function [nsum]:
+
+{@ocamltop autorun[
+# let rec nsum n =
+    if n = 0 then
+      0
+    else
+      n + nsum (n - 1);;
+  val nsum : int -> int = <fun>
+]}
+
+Given {m n+1 }, it performs a constant amount of work (an addition and
+subtraction) and calls itself recursively with argument {m n }.  We get the
+recurrence equations {m T(0)=1 } and {m T(n+1) = T(n)+1 }.  The closed form is
+clearly {m T(n)=n+1 }, as we can easily verify by substitution.  The cost is
+{e linear}.
+
+This function, given {m n+1 }, calls [nsum], performing {m O(n) } work.
+Again ignoring constant factors, we can say that this call takes exactly {m n }
+units.
+
+{@ocamltop autorun[
+# let rec nsumsum n =
+    if n = 0 then
+      0
+    else
+      nsum n + nsumsum (n - 1);;
+  val nsumsum : int -> int = <fun>
+]}
+
+We get the recurrence equations {m T(0)=1 } and {m T(n+1) = T(n)+n }.  It is easy to
+see that {m T(n)=(n-1)+\cdots+1=n(n-1)/2=O(n^2) }.  The cost is
+{e quadratic}.
+
+The function [power] divides its input {m n } into two, with
+the recurrence equation {m T(n) = T(n/2)+1 }.  Clearly {m T(2^n)=n+1 }, so
+{m T(n)=O(\log n) }.
+
+{1 Exercises}
+
+{2 Exercise 2.1}
+
+Code an iterative version of the function [power].
+
+{2 Exercise 2.2}
+
+Add a column to the table of complexities from {e The Design and Analysis of Computer Algorithms} with the heading {e 60 hours:}
+
+{table
+{tr {th complexity}{th 1 second}{th 1 minute}{th 1 hour}{th 60 hours}}
+{tr {td {m n }}{td 1000}{td 60 000}{td 3 600 000}{td }}
+{tr {td {m n \log n }}{td 140}{td 4 895}{td 204 095}{td }}
+{tr {td {m n^{2} }}{td 31}{td 244}{td 1 897}{td }}
+{tr {td {m n^{3} }}{td 10}{td 39}{td 153}{td }}
+{tr {td {m 2^{n} }}{td 9}{td 15}{td 21}{td }}
+}
+
+{2 Exercise 2.3}
+
+Let {m g_1 }, …, {m g_k } be functions such that {m g_i(n)\ge0 } for {m i=1 }, …, {m k } and all sufficiently
+large {m n }.
+
+Show that if {m f(n) = O(a_1 g_1(n)+\cdots+a_k g_k(n)) } then {m f(n) = O(g_1(n)+\cdots+g_k(n)) }.
+
+{2 Exercise 2.4}
+
+Find an upper bound for the recurrence given by {m T(1) = 1 } and {m T(n) = 2T(n/2)+1 }.  You should be
+able to find a tighter bound than {m O(n\log n) }.

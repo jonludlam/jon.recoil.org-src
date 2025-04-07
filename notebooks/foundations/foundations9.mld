@@ -1,0 +1,364 @@
+{0 Lecture 9: Sequences, or Lazy Lists}
+
+{@meta hidden[{}]}
+
+{1 A Pipeline}
+
+$$
+\framebox\{\emph\{Producer\}\} \to \framebox\{\emph\{Filter\}\} \to\cdots\to
+\framebox\{\emph\{Filter\}\} \to \framebox\{\emph\{Consumer\}\}
+$$
+{ul {- Produce sequence of items
+}{- Filter sequence in stages
+}{- Consume results as needed
+}{- {e Lazy lists} join the stages together
+}}
+
+Two types of program can be distinguished.  A sequential program
+accepts a problem to solve, processes for a while, and finally terminates
+with its result.  A typical example is the huge numerical simulations that are
+run on supercomputers.  Most of our OCaml functions also fit this model.
+
+At the other extreme are {e reactive} programs, whose job is to interact
+with the environment.  They communicate constantly during their operation and
+run for as long as is necessary.  A typical example is the software that
+controls many modern aircraft.  Reactive programs often consist of
+{e concurrent processes} running at the same time and communicating with
+one another.
+
+Concurrency is too difficult to consider in this course, but we can model
+simple pipelines such as that shown above.  The {e Producer} represents one
+or more sources of data, which it outputs as a stream.  The {e Filter}
+stages convert the input stream to an output stream, perhaps consuming several
+input items to yield a single output item.  The {e Consumer} takes as many
+elements as necessary.
+
+The Consumer drives the pipeline: nothing is computed except in response to
+its demand for an additional datum.  Execution of the Filter stages is
+interleaved as required for the computation to go through.  The programmer
+sets up the data dependencies but has no clear idea of what happens when.  We
+have the illusion of concurrent computation.
+
+The Unix operating system provides similar ideas through its {e pipes} that
+link processes together.  In OCaml, we can model pipelines using {e lazy lists}.
+
+{1 Lazy Lists (or Streams)}
+{ul {- Lists of possibly {e infinite} length
+}{- Elements {e computed upon demand}
+}{- {e Avoids waste} if there are many solutions
+}{- {e Infinite} values are a useful abstraction
+}}
+
+In OCaml, we can implement laziness by {e delaying evaluation} of the tail of
+the list.
+
+Lazy lists have practical uses.  Some algorithms, like making change, can
+yield many solutions when only a few are required.  Sometimes the original
+problem concerns infinite series: with lazy lists, we can pretend they really
+exist!
+
+We are now dealing with {e infinite} (or at least unbounded) computations.
+A potentially infinite source of data is processed one element at a time, upon
+demand.  Such programs are harder to understand than terminating ones and have
+more ways of going wrong.
+
+Some purely functional languages, such as Haskell, use lazy evaluation
+everywhere.  Even the if-then-else construct can be a function, and all lists
+are lazy.  In OCaml, we can declare a type of lists such that evaluation of the
+tail does not occur until demanded.  {e Delayed} evaluation is weaker than
+{e lazy} evaluation, but it is good enough for our purposes and often the
+best compromise for performance and memory usage.
+
+The traditional word “stream” is reserved in OCaml parlance for
+input/output channels.  Let us call lazy lists {e sequences} instead.
+
+{1 Lazy Lists in OCaml}
+{ul {- The empty tuple [()] and its {e type} [unit]
+}{- Delayed version of $E$ is [fun () -> E]
+}}
+
+{@ocaml[
+# type 'a seq =
+  | Nil
+  | Cons of 'a * (unit -> 'a seq)
+type 'a seq = Nil | Cons of 'a * (unit -> 'a seq)
+# let head (Cons (x, _)) = x
+Line 1, characters 10-27:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+Nil
+val head : 'a seq -> 'a = <fun>
+# let tail (Cons (_, xf)) = xf ()
+Line 1, characters 10-32:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+Nil
+val tail : 'a seq -> 'a seq = <fun>
+]}
+
+$\tt Cons(x, xf)$ has {e head} $x$ and {e tail function} $xf$
+
+The primitive OCaml type [unit] has one element, which is
+written [()].  This element may be regarded as a 0-tuple, and
+[unit] as the nullary Cartesian product.  (Think of the connection
+between multiplication and the number 1.)
+
+The empty tuple serves as a placeholder in situations where no information is
+required.  It may:
+{ul {- appear in a data structure.  For example, a [unit]-valued dictionary represents a set of keys.
+}{- be the argument of a function, where its effect is to {e delay evaluation}.
+}{- be the argument or result of a procedure. (see the Procedural Programming section)
+}}
+
+The empty tuple, like all tuples, is a constructor and is allowed in patterns;
+for example: [let f () = ...]
+
+In particular $\tt fun , () \rightarrow E$ is the function that takes an argument of
+type [unit] and returns the value of $E$ as its result.  Expression $E$
+is not evaluated until the function is called, even though the only possible
+argument is [()].  The function simply delays the evaluation of $E$.
+
+{1 The Infinite Sequence: $k$, $k+1$, $k+2$, …}
+
+{@ocaml[
+# let rec from k = Cons (k, fun () -> from (k+1))
+val from : int -> int seq = <fun>
+# let it = from 1
+val it : int seq = Cons (1, <fun>)
+# let it = tail it
+val it : int seq = Cons (2, <fun>)
+# let it = tail it
+val it : int seq = Cons (3, <fun>)
+]}
+
+Function [from] constructs the infinite sequence of integers starting
+from $k$.  Execution terminates because of the [fun] enclosing the
+recursive call.  OCaml displays the tail of a sequence as [fun], which
+stands for some function value.  Each call to [tail] generates the next
+sequence element.  We could do this forever.
+
+This example is of little practical value because the cost of computing a
+sequence element will be dominated by that of creating the dummy function.
+Lazy lists tend to have high overheads.
+
+{1 Consuming a Sequence}
+
+{@ocaml[
+# let rec get n s =
+    match n, s with
+    | 0, _            -> []
+    | n, Nil          -> []
+    | n, Cons (x, xf) -> x :: get (n-1) (xf ())
+val get : int -> 'a seq -> 'a list = <fun>
+]}
+
+The above code gets the first $n$ elements as a list.
+[xf ()] {e forces} evaluation.
+
+The function [get] converts a sequence to a list.  It takes the
+first $n$ elements; it takes all of them if $n<0$, which can terminate only if
+the sequence is finite.
+
+In the last line of [get], the expression [xf()] calls the tail
+function, demanding evaluation of the next element.  This operation is called
+{e forcing} the sequence.
+
+{1 Sample Evaluation}
+
+$$
+\begin\{aligned\}
+\tt get(2,, from ; 6) \
+\tt get(2,, Cons(6, fun ; () \rightarrow from ; (6+1))) \
+\tt 6 :: get(1,, from ; (6+1)) \
+\tt 6 :: get(1,, Cons ; (7,, fun ; () \rightarrow from ; (7+1))) \
+\tt 6 :: 7 :: get(0,, Cons ; (8,, fun ; () \rightarrow from ; (8+1))) \
+\tt 6 :: 7 :: \[\] \
+\tt \[6; 7\]
+\end\{aligned\}
+$$
+
+Here we ask for two elements of the infinite sequence.  In fact, three
+elements are computed: 6, 7 and 8.  Our implementation is slightly too eager.
+A more complicated [type] declaration could avoid this problem.
+Another problem is that if one repeatedly examines some particular list
+element using forcing, that element is repeatedly evaluated.  In a lazy
+programming language, the result of the first evaluation would be stored for
+later reference.  To get the same effect in OCaml requires the use of
+references.
+
+We should be grateful that the potentially infinite computation is kept
+finite.  The tail of the original sequence even contains the unevaluated
+expression 6+1.
+
+{1 Joining Two Sequences}
+
+{@ocaml[
+# let rec appendq xq yq =
+    match xq with
+    | Nil -> yq
+    | Cons (x, xf) -> Cons(x, fun () -> appendq (xf ()) yq)
+val appendq : 'a seq -> 'a seq -> 'a seq = <fun>
+]}
+
+A more fair alternative:
+
+{@ocaml[
+# let rec interleave xq yq =
+    match xq with
+    | Nil -> yq
+    | Cons (x, xf) -> Cons (x, fun () -> interleave yq (xf ()))
+val interleave : 'a seq -> 'a seq -> 'a seq = <fun>
+]}
+
+Most list functions and functionals have analogues on sequences, but strange
+things can happen.  Can an infinite list be reversed?
+
+Function [appendq] is precisely the same idea as [append]
+from the Lists lecture; it concatenates two sequences.  If the first
+argument is infinite, then [appendq] never gets to its second argument,
+which is lost.  Concatenation of infinite sequences is not terribly
+interesting.
+
+The function [interleave] avoids this problem by exchanging the two
+arguments in each recursive call.  It combines the two lazy lists, losing no
+elements.  Interleaving is the right way to combine two potentially infinite
+information sources into one.
+
+In both function declarations, observe that each [xf ()] is enclosed
+within a $\{\tt fun () \rightarrow \ldots\}$.  Each {e force} is enclosed within a
+{e delay}.  This practice makes the functions lazy.  A force not enclosed
+in a delay, as in [get] above, runs the risk of evaluating the sequence
+in full.
+
+{1 Functionals for Lazy Lists}
+
+Filtering lazy lists:
+
+{@ocaml[
+# let rec filterq p = function
+  | Nil -> Nil
+  | Cons (x, xf) ->
+      if p x then
+        Cons (x, fun () -> filterq p (xf ()))
+      else
+        filterq p (xf ())
+val filterq : ('a -> bool) -> 'a seq -> 'a seq = <fun>
+]}
+
+The infinite sequence $x$, $f(x)$, $f(f(x))$, …
+
+{@ocaml[
+# let rec iterates f x =
+    Cons (x, fun () -> iterates f (f x))
+val iterates : ('a -> 'a) -> 'a -> 'a seq = <fun>
+]}
+
+The functional [filterq] demands elements of [xq] until it finds
+one satisfying [p].  (Recall [filter], the analogous operation for ordinary lists.)  It
+contains a {e force} not protected by a {e delay}.  If [xq] is
+infinite and contains no satisfactory element, then [filtering] runs
+forever.
+
+The functional [iterates] generalises [from].  It creates the
+next element not by adding one but by calling the function [f].
+
+{1 Numerical Computations on Infinite Sequences}
+
+{@ocaml[
+# let next a x = (a /. x +. x) /. 2.0
+val next : float -> float -> float = <fun>
+]}
+
+Close enough?
+
+{@ocaml[
+# let rec within eps = function
+  | Cons (x, xf) ->
+      match xf () with
+      | Cons (y, yf) ->
+          if abs_float (x -. y) <= eps then y
+          else within eps (Cons (y, yf))
+Lines 3-6, characters 7-41:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+Nil
+Lines 1-6, characters 22-41:
+Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+Nil
+val within : float -> float seq -> float = <fun>
+]}
+
+Square Roots:
+
+{@ocaml[
+# let root a = within 1e6 (iterates (next a) 1.0)
+val root : float -> float = <fun>
+]}
+
+The {e Newton-Raphson method} is widely used for computing square roots.
+The infinite series $x_0, (a/x_0+x_0)/2, \ldots\{\}$ converges rapidly to $\sqrt\{a\}$.
+The initial approximation, $x_0$, is typically retrieved from a table, and is accurate enough
+that only a few iterations of the method are necessary.
+Calling [iterates (next a) x0] generates the {e infinite series} of
+approximations to the square root of $a$ using the Newton-Raphson method.
+To compute $\sqrt2$, the resulting series begins 1, 1.5, 1.41667, 1.4142157, 1.414213562, …,
+and this last figure is already accurate to 10 significant digits!
+
+Function [within] searches down the lazy list for two points whose
+difference is less than [eps].  It tests their absolute difference.
+Relative difference and other “close enough” tests can be coded.  Such
+components can be used to implement other numerical functions directly as
+functions over sequences.  The point is to build programs from small,
+interchangeable parts.
+
+Function [root] uses [within], [iterates] and [next] to
+to apply Newton-Raphson with a tolerance of $10^\{-6\}$
+and a (poor) initial approximation of 1.0.
+
+This treatment of numerical computation has received some attention in the
+research literature; a recurring example is Richardson extrapolation.
+
+{2 Exercise 9.1}
+
+Code an analogue of [map] for sequences.
+
+{2 Exercise 9.2}
+
+Consider the list function [concat], which concatenates a list of lists to form a single list. Can
+it be generalised to concatenate a sequence of sequences? What can go wrong?
+
+{@ocaml[
+let rec concat = function
+| [] -> []
+| l::ls -> l @ concat ls
+]}
+
+{2 Exercise 9.3}
+
+Code a function to make change using lazy lists, delivering the sequence of all possible ways of
+making change. Using sequences allows us to compute solutions one at a time when there exists an
+astronomical number. Represent lists of coins using ordinary lists. ({e Hint}: to  benefit from
+laziness you may need to pass around the sequence of alternative solutions as a function of type
+[unit -> (int list) seq].)
+
+{2 Exercise 9.4}
+
+A {e lazy binary tree} is either empty or is a branch containing a label and two lazy binary trees,
+possibly to infinite depth. Present an OCaml datatype to represent lazy binary trees, along with a
+function that accepts a lazy binary tree and produces a lazy list that contains all of the tree’s
+labels. (Taken from the exam question 2008 Paper 1 Question 5.)
+
+{2 Exercise 9.5}
+
+Code the lazy list whose elements are all ordinary lists of zeroes and ones, namely
+[[]; [0]; [1]; [0; 0]; [0; 1]; [1; 0]; [1; 1]; [0; 0; 0]; ]….  (Taken from the exam question
+2003 Paper 1 Question 5.)
+
+{2 Exercise 9.6}
+
+(Continuing the previous exercise.)
+A {e palindrome} is a list that equals its own reverse. Code the lazy list whose elements are all
+palindromes of 0s and 1s, namely
+[[]; [0]; [1]; [0; 0]; [0; 0; 0]; [0; 1; 0]; [1; 1]; [1; 0; 1]; [1; 1; 1]; [0; 0; 0; 0]; ], …. You
+may take the reversal function [List.rev] as given.

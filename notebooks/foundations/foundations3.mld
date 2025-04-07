@@ -1,0 +1,454 @@
+{0 Lecture 3: Lists}
+
+{@meta hidden[{}]}
+
+{1 Introduction}
+
+{@ocamltop autorun[
+# let x = [3; 5; 9];;
+  val x : int list = [3; 5; 9]
+# let y = [(1, "one"); (2, "two")];;
+  val y : (int * string) list = [(1, "one"); (2, "two")]
+]}
+
+A {e list} is an ordered series of elements; repetitions are significant.
+So [[3; 5; 9]] differs from [[5; 3; 9]] and from [[3; 3; 5; 9]].  Elements in the
+list are separated with [;] when constructed, as opposed to the [,] syntax
+used for fixed-length tuples.
+
+All elements of a list must have the same type.  Above we see a list of
+integers and a list of [(integer, string)] pairs.  One can also have lists of
+lists, such as [[[3]; []; [5; 6]]], which has type [int list list].
+
+In the general case, if {m x_1; \ldots; x_n } all have the same type (say
+{m \tau }) then the list {m [x_1;\ldots;x_n] } has type {m (\tau)\texttt{list} }.
+
+Lists are the simplest data structure that can be used to process collections
+of items.  Conventional languages use {e arrays} whose elements are
+accessed using subscripting: for example, {m A[i] } yields the {m i }th element of
+the array {m A }.  Subscripting errors are a known cause of programmer grief,
+however, so arrays should be replaced by higher-level data structures whenever
+possible.
+
+{@ocamltop autorun[
+# x @ [2; 10];;
+  - : int list = [3; 5; 9; 2; 10]
+# List.rev [(1, "one"); (2, "two")];;
+  - : (int * string) list = [(2, "two"); (1, "one")]
+]}
+
+The infix operator [@] (also called [List.append]) concatenates two lists.
+Also built-in is [List.rev], which reverses a list.  These are demonstrated
+in the session above.
+
+{1 The List Primitives}
+
+There are two kinds of lists:
+{ul {- [[]] represents the empty list
+}{- [x :: l] is the list with head {m x } and tail {m l }
+}}
+
+{@ocamltop autorun[
+# let nil = [];;
+  val nil : 'a list = []
+# 1 :: nil;;
+  - : int list = [1]
+# 1 :: 2 :: nil;;
+  - : int list = [1; 2]
+]}
+
+The operator [::] (also called [List.cons] for “construct”), puts a new element on
+to the head of an existing list.  While we should not be too preoccupied with
+implementation details, it is essential to know that [::] is an {m O(1) }
+operation.  It uses constant time and space, regardless of the length of the
+resulting list.  Lists are represented internally with a linked structure;
+adding a new element to a list merely hooks the new element to the front of
+the existing structure.  Moreover, that structure continues to denote the same
+list as it did before; to see the new list, one must look at the new [::] node
+(or “cons cell”) just created.  We will explain the ['a] notation in the next
+section.
+
+Here we see the element [1] being consed to the front of the list [[3; 5; 9]]:
+
+{math
+\begin{array}{ccccccccccc}
+:: & \to & \cdots & :: & \to &  :: & \to &  :: & \to & [] \\
+\downarrow &  &        & \downarrow &  & \downarrow &  & \downarrow  \\
+1     &  &        & 3     &  & 5     &  & 9
+\end{array}
+}
+
+Given a list, taking its first element (its “head”) or its list of
+remaining elements (its “tail”) also takes constant time.  Each
+operation just follows a link.  In the diagram above, the first down arrow
+leads to the head and the leftmost right arrow leads to the tail.  Once we
+have the tail, its head is the second element of the original list, etc.
+
+The tail is {e not} the last element; it is the {e list} of all elements
+other than the head!
+
+{1 Getting at the Head and Tail}
+
+{@ocamltop autorun[
+# let null = function
+    | [] -> true
+    | x :: l -> false;;
+  val null : 'a list -> bool = <fun>
+# null [];;
+  - : bool = true
+# null [1; 2; 3];;
+  - : bool = false
+# let hd (x::l) = x;;
+  Line 1, characters 7-17:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  []
+  val hd : 'a list -> 'a = <fun>
+# hd [1; 2; 3];;
+  - : int = 1
+# let tl (x::l) = l;;
+  Line 1, characters 7-17:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  []
+  val tl : 'a list -> 'a list = <fun>
+# tl [7; 6; 5];;
+  - : int list = [6; 5]
+]}
+
+The empty list has neither head nor tail.  Applying [hd] or [tl] to [[]]
+is an error---strictly speaking, an “exception”.  The function [null] can
+be used to check for the empty list beforehand.  Taking a list apart using
+combinations of [hd] and [tl] is hard to get right.  Fortunately, it is seldom
+necessary because of {e pattern-matching}.
+
+The declaration of [null] introduces a new concept known as "pattern matching",
+which we will explore more in subsequent lectures. For now, it is sufficient
+to observe that [let null = function] allows for matching on the two possible values
+that might be passed in as argument to [null] here: one for the empty list (for which it returns [true])
+and one for non-empty lists (for which it returns [false]).
+
+The declaration of [hd] above has only one clause, for non-empty lists.  They
+have the form [x::l] and the function returns [x], which is the head.  If you
+compile this program, OCaml also prints a warning to tell us that calling
+the function could raise an exception because not all possible inputs are handled,
+including a counter-example (in this case, the empty list [[]]). The declaration of [tl] is similar to [hd].
+
+These three primitive functions are {e polymorphic} and allow flexibility in the
+types of their arguments and results. Note their types!
+
+{@ocamltop[
+# null;;
+  - : 'a list -> bool = <fun>
+# hd;;
+  - : 'a list -> 'a = <fun>
+# tl;;
+  - : 'a list -> 'a list = <fun>
+]}
+
+Symbols ['a] and ['b] are called {e type variables} and stand for any types. Code
+written using these functions is checked for type correctness at compile time.
+And this guarantees strong properties at run time, for example that the
+elements of any list all have the same type.  They are usually read as their
+corresponding greek characters; ['a] is "alpha", ['b] is "beta", and so on.
+
+{1 Computing the Length of a List}
+
+{@ocamltop[
+# let rec nlength = function
+  | [] -> 0
+  | x :: xs -> 1 + nlength xs;;
+  val nlength : 'a list -> int = <fun>
+# nlength [];;
+  - : int = 0
+# nlength [5; 6; 7];;
+  - : int = 3
+]}
+
+{math
+\begin{aligned}
+\text{nlength }[a; b; c] \Rightarrow &; 1 + \text{nlength }[b; c[ \\
+\Rightarrow &; 1 + (1 + \text{nlength }[c[) \\
+\Rightarrow &; 1 + (1 + (1 + \text{nlength }[[)) \\
+\Rightarrow &; 1 + (1 + (1 + 0)) \\
+\Rightarrow &; \ldots ;; 3
+\end{aligned}
+}
+
+Most list processing involves recursion.  This is a simple example; patterns
+can be more complex.  Observe the use of a vertical bar [|] to separate the function’s
+clauses.  We have {e one} function declaration that handles two cases.
+To understand its role, consider the following faulty code:
+
+{@ocamltop autorun[
+# let rec nlength [] = 0;;
+  Line 1, characters 16-22:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  _::_
+  val nlength : 'a list -> int = <fun>
+# let rec nlength (x::xs) = 1 + nlength xs;;
+  Line 1, characters 16-40:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  []
+  val nlength : 'a list -> int = <fun>
+]}
+
+These are two declarations, not one.  First we declare [nlength] to be a
+function that handles only empty lists.  Then we redeclare it to be a function
+that handles only non-empty lists; it can never deliver a result.  We see that
+a second [let] declaration replaces any previous one rather than extending it
+to cover new cases.
+
+Now, let us return to our original declaration of [nlength].  The length function
+is {e polymorphic} and applies to {e all} lists regardless of element
+type!  Most programming languages lack such flexibility.
+
+Unfortunately, this length computation is naive and wasteful.  Like
+[nsum] earlier, it is not tail-recursive.  It
+uses {m O(n) } space, where {m n } is the length of its input.  As usual, the
+solution is to add an accumulating argument.
+
+{1 Efficiently Computing the Length of a List}
+
+{@ocamltop autorun[
+# let rec addlen n = function
+  | []    -> n
+  | x::xs -> addlen (n + 1) xs;;
+  val addlen : int -> 'a list -> int = <fun>
+# addlen 0 [5; 6; 7];;
+  - : int = 3
+]}
+
+Recall that the use of [function] introduces an extra (unnamed) argument
+that is pattern matched in the subsequent clauses; in this case, to break
+open the list.
+
+{math
+\begin{aligned}
+\text{addlen }0 [a; b; c] \Rightarrow &  \text{addlen 1 } [b; c] \\
+\Rightarrow  & \text{addlen 2 } [c] \\
+\Rightarrow  & \text{addlen 3 } [] \\
+\Rightarrow  & 3
+\end{aligned}
+}
+
+Function [addlen] is again polymorphic.  Its type mentions the integer
+accumulator.
+
+Now we may declare an efficient length function.  It is simply a wrapper for
+[addlen], supplying zero as the initial value of {m n }.
+
+{@ocamltop autorun[
+# let length xs = addlen 0 xs;;
+  val length : 'a list -> int = <fun>
+# length [5; 6; 7; 8];;
+  - : int = 4
+]}
+
+The recursive calls do not nest: this version is iterative.  It takes {m O(1) }
+space.  Obviously its time requirement is {m O(n) } because it takes at least {m n }
+steps to find the length of an {m n }-element list.
+
+{1 Append: List Concatenation}
+
+{@ocamltop autorun[
+# let rec append xs ys =
+    match xs, ys with
+    | [], ys    -> ys
+    | x::xs, ys -> x :: append xs ys;;
+  val append : 'a list -> 'a list -> 'a list = <fun>
+# append [1; 2; 3] [4];;
+  - : int list = [1; 2; 3; 4]
+# let (@) = append;;
+  val ( @ ) : 'a list -> 'a list -> 'a list = <fun>
+# [1; 2; 3] @ [4];;
+  - : int list = [1; 2; 3; 4]
+]}
+
+Patterns can be as complicated as we like.  Here, the two patterns are
+[[], ys] and [x::xs, ys].
+
+{math
+\begin{aligned}
+\text{append }[1; 2; 3] [4] \Rightarrow & 1 :: \text{append }[2; 3] [4] \\
+\Rightarrow & 1 :: (2 :: \text{append }[3] [4]) \\
+\Rightarrow & 1 :: (2 :: (3 :: \text{append }[] [4])) \\
+\Rightarrow & 1 :: (2 :: (3 :: [4])) \\
+\Rightarrow & [1; 2; 3; 4]
+\end{aligned}
+}
+
+Here is how append might be declared, also noting that we have defined [@] as
+an infix operator that is a more convenient way to call [append] on two lists.
+However, this function is also not iterative.  It scans its first
+argument, sets up a string of [cons] operations ([::]) and finally does them.
+
+It uses {m O(n) } space and time, where {m n } is the length of its first argument.
+{e Its costs are independent of its second argument.}
+
+An accumulating argument could make it iterative, but with considerable
+complication.  The iterative version would still require {m O(n) } space and time
+because concatenation requires copying all the elements of the first list.
+Therefore, we cannot hope for asymptotic gains; at best we can decrease the
+constant factor involved in {m O(n) }, but complicating the code is likely to
+increase that factor.  Never add an accumulator merely out of habit.
+
+Note append’s polymorphic type. It tells us that two lists can be joined if
+their element types agree.
+
+{1 Reversing a List in {m O(n^2) }}
+
+Let us consider one way to reverse a list.
+
+{@ocamltop autorun[
+# let rec nrev = function
+  | [] -> []
+  | x::xs -> (nrev xs) @ [x];;
+  val nrev : 'a list -> 'a list = <fun>
+]}
+
+{@ocamltop autorun[
+# nrev [1; 2; 3];;
+  - : int list = [3; 2; 1]
+]}
+
+{math
+\begin{aligned}
+\text{nrev }[a; b; c] \Rightarrow &; \text{nrev }[b; c];@;[a] \\
+\Rightarrow &;  (\text{nrev }[c];@;[b]);@;[a] \\
+\Rightarrow &;  ((\text{nrev }[];@;[c]);@;[b]);@;[a] \\
+\Rightarrow &;  (([];@;[c]);@;[b]);@;[a] \ \ldots \ [c; b; a]\
+\end{aligned}
+}
+
+This reverse function is grossly inefficient due to poor usage of [append], which
+copies its first argument.  If [nrev] is given a list of length {m n>0 }, then
+append makes {m n-1 } conses to copy the reversed tail.  Constructing the list
+[[x]] calls [cons] again, for a total of {m n } calls.  Reversing the tail
+requires {m n-1 } more conses, and so forth.  The total number of conses is:
+
+{math  0 + 1 + 2 + \cdots + n = {n(n+1)/2}  }
+
+The time complexity is therefore {m O(n^2) }.  Space complexity is only {m O(n) }
+because the copies don’t all exist at the same time.
+
+{1 Reversing a List in {m O(n) }}
+
+{@ocamltop autorun[
+# let rec rev_app xs ys =
+    match xs, ys with
+    | [], ys    -> ys
+    | x::xs, ys -> rev_app xs (x::ys);;
+  val rev_app : 'a list -> 'a list -> 'a list = <fun>
+]}
+
+{math
+\begin{aligned}
+\text{rev\_app }[a; b; c] [] \Rightarrow & \text{rev\_app }[b; c] [a] \\
+\Rightarrow & \text{rev\_app }[c] [b; a] \\
+\Rightarrow & \text{rev\_app }[] [c; b; a] \\
+\Rightarrow & [c; b; a]
+\end{aligned}
+}
+
+Calling [rev_app xs ys] reverses the elements of [xs] and
+prepends them to [ys].  Now we may declare
+
+{@ocamltop autorun[
+# let rev xs = rev_app xs [];;
+  val rev : 'a list -> 'a list = <fun>
+# rev [1; 2; 3];;
+  - : int list = [3; 2; 1]
+]}
+
+It is easy to see that this reverse function performs just {m n } conses, given
+an {m n }-element list.  For both reverse functions, we could count the number of
+conses precisely---not just up to a constant factor.  {m O } notation is still
+useful to describe the overall running time: the time taken by a cons
+varies from one system to another.
+
+The accumulator {m y } makes the function iterative.  But the gain in complexity
+arises from the removal of [append].  Replacing an expensive operation (append)
+by a series of cheap operations (cons) is called {e reduction in strength}
+and is a common technique in computer science.  It originated when many
+computers did not have a hardware multiply instruction; the series of products
+{m i\times r } for {m i=0 }, {m \ldots, n } could more efficiently be computed by
+repeated addition.  Reduction in strength can be done in various ways; we
+shall see many instances of removing append.
+
+Consing to an accumulator produces the result in reverse.  If
+that forces the use of an extra list reversal then the iterative function
+may be much slower than the recursive one.
+
+{1 Lists, Strings and Characters}
+
+Strings are provided in most programming languages to allow text processing.
+Strings are essential for communication with users. Even a purely numerical
+program formats its results ultimately as strings.
+
+{@ocamltop autorun[
+# (* a character constant *) 'a';;
+  - : char = 'a'
+# (* a string constant of length 1 *) "a";;
+  - : string = "a"
+# (* a string constant of length 3 *) "abc";;
+  - : string = "abc"
+# String.length "abc";;
+  - : int = 3
+# (* concatenate two strings *) "abc" ^ "def";;
+  - : string = "abcdef"
+]}
+
+In a few programming languages, strings simply are lists of characters. In
+OCaml they are a separate type, unrelated to lists, reflecting the fact that
+strings are an abstract concept in themselves.
+
+Similarly, characters are not strings of size one, but are a primitive concept.
+Character constants in OCaml have the form ['c'], where {m c } is any character.
+For example, the comma character is [','].
+
+Special characters are coded in strings using {e escape sequences} involving the
+backslash character; among many others, a double quote is written ["\\"] and
+the newline character is written ["\n"]. For example, the string
+["I\nLIKE\nCHEESE\n"] represents three text lines.
+
+In addition to the operators described above, the relations [<], [<=], [>], and
+[>=] work for strings and yield alphabetic order (more precisely, lexicographic
+order with respect to ASCII character codes).
+
+{1 Exercises}
+
+{2 Exercise 3.1}
+
+Code a recursive function to compute the sum of a list’s elements. Then code an iterative version
+and comment on the improvement in efficiency.
+
+{2 Exercise 3.2}
+
+Code a function to return the last element of a non-empty list. How efficiently can this be done?
+
+{2 Exercise 3.3}
+
+Code a function to return the list consisting of the even-numbered elements of the list given as its
+argument. For example, given [[a; b; c; d]] it should return [[b; d]].
+
+{2 Exercise 3.4}
+
+Consider the polymorphic types in these two function declarations:
+
+{@ocamltop[
+# let id x = x;;
+  val id : 'a -> 'a = <fun>
+# let rec loop x = loop x;;
+  val loop : 'a -> 'b = <fun>
+]}
+
+Explain why these types make logical sense, preventing run time type errors, even for expressions
+like [id [id [id 0]]] or [loop true / loop 3]. ([/] is the integer division operator in OCaml)
+
+{2 Exercise 3.5}
+
+Code a function [tails] to return the list of the tails of its argument. For example, given
+[[1; 2; 3]] it should return [[[1; 2; 3]; [2; 3]; [3]; []]].

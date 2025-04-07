@@ -1,0 +1,439 @@
+{0 Lecture 1: Introduction to Programming}
+
+{@meta hidden[{}]}
+
+{1 Basic Concepts in Computer Science}
+{ul {- Computers: a child can use them; {b nobody} can fully understand them!
+}{- We can master complexity through levels of abstraction.
+}{- Focus on 2 or 3 levels at most!
+}}
+
+{b Recurring issues:}
+{ul {- {e what services} to provide at each level
+}{- {e how to implement} them using lower-level services
+}{- {e the interface} that defines how the two levels should communicate
+}}
+
+A basic concept in computer science is that large systems can only be
+understood in levels, with each level further subdivided into functions or
+services of some sort. The interface to the higher level should supply the
+advertised services. Just as important, it should block access to the means by
+which those services are implemented. This {e abstraction barrier} allows one
+level to be changed without affecting levels above. For example, when a
+manufacturer designs a faster version of a processor, it is essential that
+existing programs continue to run on it. Any differences between the old and
+new processors should be invisible to the program.
+
+Modern processors have elaborate specifications, which still sometimes leave
+out important details. In the old days, you then had to consult the circuit
+diagrams.
+
+{2 Example 1: Dates}
+{ul {- Abstract level: dates over a certain interval
+}{- Concrete level: typically 6 characters: [YYMMDD] (where each character is represented by 8 bits)
+}{- Date crises caused by {b inadequate} internal formats:
+{ul {- Digital’s PDP-10: using 12-bit dates (good for at most 11 years)
+}{- 2000 crisis: 48 bits could be good for lifetime of universe!
+}}
+}}
+
+Digital Equipment Corporation’s date crisis occurred in 1975.  The
+PDP-10 was a 36-bit mainframe computer. It represented dates using a 12-bit
+format designed for the tiny PDP-8. With 12 bits, one can distinguish
+{m 2^{12} = 4096} days or 11 years.
+
+The most common industry format for dates uses six characters: two for the
+year, two for the month and two for the day. The most common “solution” to the
+year 2000 crisis is to add two further characters, thereby altering file sizes.
+Others have noticed that the existing six characters consist of 48 bits,
+already sufficient to represent all dates over the projected lifetime of the
+{m 2^{48}}
+universe: {m 2^{48} = 2.8\times 10^{14}\textrm{days} } = {m 7.7\times 10^{11} \textrm{years!} }
+
+Mathematicians think in terms of unbounded ranges, but the representation we
+choose for the computer usually imposes hard limits. A good programming
+language like OCaml lets one easily change the representation used in the
+program.  But if files in the old representation exist all over the place,
+there will still be conversion problems. The need for compatibility with older
+systems causes problems across the computer industry.
+
+{2 Example II: Floating Point Numbers}
+
+Computers have integers like [1066] and floats like {m 1.066\times 10^3 }.
+A floating-point number is represented by two integers.
+The concept of {e data type} involves:
+{ul {- how a value is represented inside the computer
+}{- the suite of operations given to programmers
+}{- valid and invalid (or exceptional) results, such as “infinity”
+}}
+
+Computer arithmetic can yield {e incorrect answers!}
+
+In science, numbers written with finite precision and a decimal exponent are
+said to be in {e standard form}. The computational equivalent is the {e floating
+point number}. These are familiar to anybody who has used a scientific
+calculator.  Internally, a float consists of two integers.
+
+Because of its finite precision, floating-point computations are potentially
+inaccurate. To see an example, use your nearest electronic calculator to
+compute {m (2^{1/10000})^{10000} }. I get {m 1.99999959}! With certain computations,
+the errors spiral out of control. Many programming languages fail to check
+whether even integer computations fall within the allowed range: you can add
+two positive integers and get a negative one!
+
+Most computers give us a choice of precisions. In 32-bit precision, integers
+typically range from {m 2^{31}-1 } (namely 2 147 483 647) to {m -2^{31} }; floats
+are accurate to about six decimal places and can get as large as {m 10^{35} } or so.
+For floats, 64-bit precision is often preferred. Early languages like Fortran
+required variables to be declared as [INTEGER], [REAL] or [COMPLEX] and barred
+programmers from mixing numbers in a computation. Nowadays, programs handle
+many different kinds of data, including text and symbols. The concept of a
+{e data type} can ensure that different types of data are not combined in a
+senseless way.
+
+Inside the computer, all data are stored as bits. In most programming
+languages, the compiler uses types to generate correct machine code, and types
+are not stored during program execution. In this course, we focus almost
+entirely on programming in a high-level language: OCaml.
+
+{1 Goals of Programming}
+{ul {- to describe a computation so that it can be done {b mechanically}:
+{ul {- Expressions compute values.
+}{- Commands cause effects.
+}}
+}{- to do so efficiently and {b correctly}, giving the right answers quickly
+}{- to allow easy modification as needs change
+{ul {- Through an orderly {b structure} based on abstraction principles
+}{- Such as modules or classes
+}}
+}}
+
+Programming {e in-the-small} concerns the writing of code to do simple, clearly
+defined tasks. Programs provide expressions for describing mathematical
+formulae and so forth. This was the original contribution of FORTRAN, the
+FORmula TRANslator. Commands describe how control should flow from one part of
+the program to the next.
+
+As we code layer upon layer, we eventually find ourselves programming
+{e in the large} : joining large modules to solve some messy task. Programming
+languages have used various mechanisms to allow one part of the program to
+provide interfaces to other parts. Modules encapsulate a body of code, allowing
+outside access only through a programmer-defined interface. {e Abstract Data
+Types} are a simpler version of this concept, which implement a single concept
+such as dates or floating-point numbers.
+
+{e Object-oriented programming} is the most complicated approach to modularity.
+{e Classes} define concepts, and they can be built upon other classes. Operations
+can be defined that work in appropriately specialised ways on a family of
+related classes. {e Objects} are instances of classes and hold the data that is
+being manipulated.
+
+This course does not cover OCaml’s sophisticated module system, which can do
+many of the same things as classes. You will learn all about objects when you
+study Java. OCaml includes a powerful object system, although this is not used
+as much as its module system.
+
+{1 Why Program in OCaml?}
+
+Why program in OCaml at all?
+{ul {- It is interactive.
+}{- It has a flexible notion of {e data type}.
+}{- It hides the underlying hardware: {e no crashes}.
+}{- Programs can easily be understood mathematically.
+}{- It distinguishes naming something from {e updating memory}.
+}{- It manages storage for us.
+}}
+
+Programming languages matter. They affect the reliability, security, and
+efficiency of the code you write, as well as how easy it is to read, refactor,
+and extend. The languages you know can also change how you think, influencing
+the way you design software even when you’re not using them.
+
+What makes OCaml special is that it occupies a sweet spot in the space of
+programming language designs. It provides a combination of efficiency,
+expressiveness and practicality that is difficult to find matched by any other language.
+“ML” was originally the meta language of the LCF (Logic for Computable Functions)
+proof assistant released by Robin Milner in 1972 (at Stanford, and later at Cambridge).
+ML was turned into a compiler in order to make it easier to use LCF on different machines,
+and it was gradually turned into a full-fledged system of its own by the 1980s.
+
+The modern OCaml emerged in 1996, and the past twenty five years have seen OCaml
+attract a significant user base with language improvements being steadily
+added to support the growing commercial and academic codebases.
+OCaml is therefore the outcome of years of research into programming languages,
+and a good base to begin our journey into learning the foundations of computer
+science.
+
+Because of its connection to mathematics, OCaml programs can be designed and
+understood without thinking in detail about how the computer will run them.
+Although a program can abort, it cannot crash: it remains under the control of
+the OCaml system. It still achieves respectable efficiency and provides
+lower-level primitives for those who need them. Most other languages allow
+direct access to the underlying machine and even try to execute illegal
+operations, causing crashes.
+
+The only way to learn programming is by writing and running programs. This web
+notebook provides an interactive environment where you can modify the example
+fragments and see the results for yourself.  You should also consider
+installing OCaml on your own computer so that you try more advanced programs
+locally.
+
+{1 A first session with OCaml}
+
+{@ocamltop autorun[
+# let pi = 3.14159265358979;;
+  val pi : float = 3.14159265358979
+]}
+
+The first line of this simple session is a {e value declaration}. It makes the
+name [pi] stand for the floating point number [3.14159]. (Such names are called
+{e identifiers}.)  OCaml echoes the name ([pi]) and type ([float]) of the
+declared identifier.
+
+{@ocamltop autorun[
+# pi *. 1.5 *. 1.5;;
+  - : float = 7.06858347057702829
+]}
+
+The second line computes the area of the circle with radius [1.5] using the
+formula {m A = \pi r^2 }. We use [pi] as an abbreviation for [3.14159].
+Multiplication is expressed using [*.], which is called an {e infix operator}
+because it is written between its two operands.
+
+OCaml replies with the computed value (about [7.07]) and its type (again [float]).
+
+{@ocamltop autorun[
+# let area r = pi *. r *. r;;
+  val area : float -> float = <fun>
+]}
+
+To work abstractly, we should provide the service “compute the area of a
+circle,” so that we no longer need to remember the formula. This sort of
+encapsulated computation is called a {e function}. The third line declares the
+function [area]. Given any floating point number [r], it returns another
+floating point number computed using the [area] formula; note that the function
+has type [float -> float].
+
+{@ocamltop autorun[
+# area 2.0;;
+  - : float = 12.56637061435916
+]}
+
+The fourth line calls the function [area] supplying [2.0] as the argument. A
+circle of radius [2] has an area of about [12.6]. Note that brackets around a
+function argument are not necessary.
+
+The function uses [pi] to stand for [3.14159]. Unlike what you may have seen in
+other programming languages, [pi] cannot be "assigned to" or otherwise updated.
+Its meaning within [area] will persist even if we issue a new [let] declaration
+for [pi] afterwards.
+
+{1 Raising a Number to a Power}
+
+{@ocamltop autorun[
+# let rec npower x n =
+    if n = 0 then 1.0
+    else x *. npower x (n - 1);;
+  val npower : float -> int -> float = <fun>
+]}
+
+Our new [npower] definition can now take additional arguments, reflected in the arrows
+present in the type of [npower]; these represent {e parameters} that can be passed to the
+new value being defined, with the final segment being the resulting type. Thus our [npower]
+type can be read as "pass in a float and integer to return a float".
+
+{e Mathematical Justification} (for {m x\not=0 }):
+{math
+\begin{aligned}
+x^0 & = 1 \
+x^{n+1} & = x\times x^n.
+\end{aligned}
+}
+
+The function [npower] raises its float argument [x] to the power [n], a
+non-negative integer. The function is {b recursive}: it calls itself.  You
+can spot a recursive function due to the [rec] keyword in the definition:
+this indicates that any invocation of the function name within the function body should call itself.
+This concept should be familiar from mathematics, since exponentiation is defined by the
+rules shown above. You may also have seen recursion in the product rule for
+differentiation: {m (u\cdot v)' = u\cdot v' + u'\cdot v }. In finding the derivative of {m u\cdot v },
+we recursively find the derivatives of {m u } and {m v }, combining them to obtain the desired result.
+The recursion is meaningful because it terminates: we reduce the problem to two smaller
+problems, and this cannot go on forever. The OCaml programmer uses recursion
+heavily.  For {m n\geq0 }, the equation {m x^{n+1} = x\times x^n } yields an obvious
+computation:
+
+{math x^3 = x\times x^2 = x\times x\times x^1 = x\times x\times x\times x^0 = x\times x\times x }
+
+The equation clearly holds even for negative {m n }. However, the corresponding
+computation runs forever:
+
+{math x^{-1} = x\times x^{-2} = x\times x\times x^{-3}=\cdots  }
+
+Note that the function [npower] contains both an integer constant ([0]) and a
+floating point constant ([1.0]). The decimal point makes all the difference.
+OCaml will notice and ascribe different meaning to each type of constant.
+
+{@ocamltop autorun[
+# let square x = x *. x;;
+  val square : float -> float = <fun>
+]}
+
+Now for a tiresome but necessary aside. In most languages, the types of
+arguments and results must always be specified. OCaml is unusual that it normally
+infers the types itself. However, sometimes it is useful to supply a hint to
+help you debug and develop your program. OCaml will still infer the types even if you don’t specify them, but in some cases
+it will use a more inefficient function than a specialised one. Some languages
+have just one type of number, converting automatically between different
+formats; this is slow and could lead to unexpected rounding errors.  Type
+constraints are allowed almost anywhere. We can put one on any occurrence of x
+in the function.
+
+{@ocamltop autorun[
+# let square (x : float) = x *. x;;
+  val square : float -> float = <fun>
+]}
+
+Or we can constrain the type of the function’s result:
+
+{@ocamltop autorun[
+# let square x : float = x *. x;;
+  val square : float -> float = <fun>
+]}
+
+OCaml treats the equality and comparison test specially. Expressions like [if x = y then] …
+are allowed provided [x] and [y] have the same type and equality testing is
+possible for that type. (We discuss equality further in a later lecture.)
+Note that [x <> y] is OCaml for {m x\not=y }.
+
+A characteristic feature of the computer is its ability to test for conditions
+and act accordingly.  In the early days, a program might jump to a given
+address depending on the sign of some number.  Later, John McCarthy defined
+the {e conditional expression} to satisfy [if true then x else y = x] and
+[if false then x else y = y].
+
+OCaml evaluates the expression [if] {m B } [then] {m E_1 } [else] {m E_2 } by first evaluating {m B }.
+If the result is [true] then OCaml evaluates {m E_1 } and otherwise {m E_2 }.  Only one
+of the two expressions {m E_1 } and {m E_2 } is evaluated!  If both were evaluated,
+then recursive functions like [npower] above would run forever.
+
+The [if]-expression is governed by an expression of type [bool], whose two
+values are [true] and [false].  In modern programming languages, tests are not
+built into “conditional branch” constructs but can just be part of normal expressions.
+Tests, or {e Boolean expressions,} can be expressed using relational operators
+such as [<] and [=]. They can be combined using the Boolean operators for
+negation ([not]), conjunction (written as [&&]) and disjunction (written as [||]).  New
+properties can be declared as functions: here, to test whether an integer is
+even, for example:
+
+{@ocamltop autorun[
+# let even n = n mod 2 = 0;;
+  val even : int -> bool = <fun>
+]}
+
+{1 {e Efficiently} Raising a Number to a Power}
+
+{@ocamltop autorun[
+# let rec power x n =
+    if n = 1 then x
+    else if even n then
+      power (x *. x) (n / 2)
+    else
+      x *. power (x *. x) (n / 2);;
+  val power : float -> int -> float = <fun>
+]}
+
+{e Mathematical Justification}
+{math \begin{aligned}
+x^1 & = x \
+x^{2n} & = (x^2)^n  \
+x^{2n+1} & = x\times(x^2)^n.
+\end{aligned} }
+
+For large [n], computing powers using {m x^{n+1} = x\times x^n } is too slow to
+be practical.  The equations above are much faster. Example:
+
+{math  2^{12} = 4^6 = 16^3 = 16\times 256^1 = 16\times 256 = 4096.  }
+
+Instead of [n] multiplications, we need at most {m 2\lg n } multiplications,
+where {m \lg n } is the logarithm of {m n } to the base {m 2 }.
+
+We use the function [even], declared previously, to test whether the
+exponent is even.  Integer division ([/]) truncates its result to an
+integer: dividing {m 2n+1 } by 2 yields {m n }.
+
+A recurrence is a useful computation rule only if it is bound to terminate.
+If {m n>0 } then {m n } is smaller than both {m 2n } and {m 2n+1 }.  After enough
+recursive calls, the exponent will be reduced to {m 1 }.  The equations also hold
+if {m n\leq0 }, but the corresponding computation runs forever.
+
+Our reasoning assumes arithmetic to be {e exact}. Fortunately, the calculation is
+well-behaved using floating-point.
+
+Computer numbers have a finite range, which if exceeded results in the
+integer wrapping around.  You will understand this behaviour more as you
+learn about computer architecture and how modern systems represent
+numbers in memory.
+
+If integers and floats must be combined in a calculation, OCaml provides functions
+to convert between them:
+
+{@ocamltop autorun[
+# int_of_float 3.14159;;
+  - : int = 3
+# float_of_int 3;;
+  - : float = 3.
+]}
+
+OCaml’s libraries are organised using “modules”, so we may use compound
+identifiers such as {!Float.of_int} to refer to library functions. There
+are many thousands of library functions available in the OCaml ecosystem,
+including text-processing and operating systems functions in addition to the
+usual numerical ones.
+
+{1 Exercises}
+
+{2 Exercise 1.1}
+
+One solution to the year 2000 bug involves storing years as two digits, but interpreting them such
+that 50 means 1950 and 49 means 2049. Comment on the merits and demerits of this approach.
+
+{2 Exercise 1.2}
+
+Using the date representation of the previous exercise, code OCaml functions to (a) compare two
+years (b) add/subtract some given number of years from another year.
+
+{2 Exercise 1.3}
+
+Why would no experienced programmer write an expression of the form [if] … [then true else false]?
+What about expressions of the form [if] … [then false else true]?
+
+{2 Exercise 1.4}
+
+Functions [npower] and [power] both return a [float]. The definition of [npower] returns the float
+value [1.0] in its base case. The definition of [power] does not, so how does the OCaml type checker
+know that [power] returns a [float]?
+
+{2 Exercise 1.5}
+
+Because computer arithmetic is based on binary numbers, simple decimals such as 0.1 often cannot be
+represented exactly. Write a function [mul] that performs the computation
+{math \underbrace{x+x+\cdots+x}_{n} }
+where {m x } has type [float]. (It is essential to use repeated addition rather than multiplication!)
+
+The value computed with [n = 10000] and [x = 0.1] may print as
+[1000.0], which looks exact. If that happens, then evaluate the
+expression [mul 0.1 10000 - 1000.0]
+
+An error of this type has been blamed for the failure of an American Patriot Missile battery to
+intercept an incoming Iraqi missile during the {{: https://en.wikipedia.org/wiki/MIM-104_Patriot#Failure_at_Dhahran} first Gulf War}.
+The missile hit an American Army barracks, killing 28.
+
+{2 Exercise 1.6}
+
+Another example of the inaccuracy of floating-point arithmetic takes the golden ratio
+{m \phi\approx1.618\ldots } as its starting point:
+{math \gamma_0 = \frac{1+\sqrt5}{2} \quad\text{and}\quad\gamma_{n+1} = \frac{1}{\gamma_n-1}. }
+In theory, it is easy to prove that {m \gamma_n=\cdots = \gamma_1 = \gamma_0 } for all {m n>0 }. Code this
+computation in OCaml and report the value of {m \gamma_{50} }. {e Hint:} in OCaml, {m \sqrt5 } is expressed
+as [sqrt 5.0].
