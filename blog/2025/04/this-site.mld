@@ -1,7 +1,8 @@
 {0 This site}
 
 {@meta hidden[
-{ libs: [ "mime_printer" ] }
+{ other_config: {published: "20250407T12:00:00Z"},
+  libs: [ "mime_printer" ] }
 ]}
 
 I've spent a {e lot} of time over the past few years working on Odoc, the OCaml documentation
@@ -58,14 +59,19 @@ style="fill:lime;stroke:purple;stroke-width:5;"/></svg> %}
 
 {1 Things to come}
 
+{2 Merlin support}
 There are a bunch of things I want to add to this, for example, Merlin support.
-In fact, merlin-js already exists and works, but the problem is that it's not
+In fact, {{:https://github.com/voodoos/merlin-js}merlin-js} already exists and works,
+thanks to the fantastic work of {{:https://github.com/voodoos}Ulysse}, but the
+problem is that it's not
 really designed for toplevel work, and it doesn't work when the code is broken
 up into chunks like I do here. So either I need to concatenate all the cells
 together before I give it to Merlin, or I need to make each cell it's own little
 module and 'open' every previous cell's module. 
 
-Within a single cell, it does already work:
+Within a single cell, it does already work. You can see that Merlin is correctly
+underlining the error in the following cell. You should also be able to hover over
+the variables and see their types.
 
 {@ocaml[
 type t = { foo : int; bar : string };;
@@ -75,10 +81,10 @@ let x = { foo = 1; bar = "hello" };;
 let this_line_has_an_error = { foo = 1; bar = None };;
 ]}
 
-But across cells, Merlin doesn't work, though the code is executes correctly. You can see that in
-the following cell, which re-pushes the SVG image from the cell above. Merlin highlights that
-it doesn't know what [svg] is, but the code gets executed correctly and the image is rendered
-below the cell. 
+But across cells, I've broken Merlin, though the code is executes correctly. You can see the
+problem in the following cell, which re-pushes the SVG image using the variable [svg] defined
+in the cell above. Merlin highlights the use of the varible [svg] is, because it's not aware
+of the varible, but the code gets executed correctly and the image is rendered below the cell. 
 
 {x@ocaml[
 Mime_printer.push "image/svg" (String.concat "\n" svg);;
@@ -87,6 +93,36 @@ Mime_printer.push "image/svg" (String.concat "\n" svg);;
 <polygon points="100,10 40,198 190,78 10,78 160,198" 
 style="fill:lime;stroke:purple;stroke-width:5;"/></svg> %}
 ]}
+
+{2 Dynamic libraries}
+Currently the use of libraries it quite limited - they are defined more-or-less statically. I've had
+dynamic libraries working in the past, but I need to re-implement them. The plan is to have the
+[cma] files converted to [js] files and then load them on-demand when the notebook specifies them. The
+tricky thing here is that we need to be able to use them both in the browser and in bytecode executables
+so that the 'test-promote' workflow still works. This will probably require specifying the libraries
+by name, and having to re-implement the work that {{:https://projects.camlcity.org/projects/findlib.html}findlib}
+does to find the libraries and load them and their dependencies in the right order, though this time
+entirely over HTTP.
+
+{2 Other things}
+There are loads of other things I'm interested in doing, including:
+- Investigating how to do 'exercises' to allow readers to try things out in a guided way
+- 'Test cells' to see if implementations are correct
+- Persistence of the notebook state - both using local and remote storage
+- Integration of docs
+- Exploration of the execution model - how to run the code in the right order and ensure reproducibility
+- Use of remote execution engines rather than just in the browser
+- Other languages?
+
+Right now though, my focus is on the functionality required for this blog, with a secondary goal of
+looking at how we might use this sort of technology on the docs site on ocaml.org. Wouldn't it be
+cool to be able to drop into a live OCaml toplevel for any library in opam?
+
+{1 Example notebooks}
+
+As a more extended example of odoc notebooks, I have converted to this format the course that I help teach
+at the University of Cambridge; {{:https://www.cl.cam.ac.uk/teaching/2425/FoundsCS/}Foundations of Computer Science}.
+{{!/site/notebooks/foundations/page-index}Try them out for yourself!}.
 
 
 

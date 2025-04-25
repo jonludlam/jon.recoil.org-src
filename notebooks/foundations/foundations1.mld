@@ -1,6 +1,8 @@
 {0 Lecture 1: Introduction to Programming}
 
-{@meta hidden[{}]}
+{@meta hidden[
+{}
+]}
 
 {1 Basic Concepts in Computer Science}
 {ul {- Computers: a child can use them; {b nobody} can fully understand them!

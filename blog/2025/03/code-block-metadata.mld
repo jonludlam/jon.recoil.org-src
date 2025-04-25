@@ -1,6 +1,8 @@
 {0 Code block metadata}
 
-{@meta hidden[{}]}
+{@meta hidden[{
+other_config: {published: "20250307T12:00:00Z"}
+}]}
 
 Back in 2021 {{:https://github.com/julow}@julow} introduced some {{:https://github.com/ocaml-doc/odoc-parser/pull/2}new syntax} to odoc’s code blocks to allow us to attach arbitrary metadata to the blocks. We imposed no structure on this; it was simply a block of text in between the language tag and the start of the code block. Now odoc needs to use it itself, we need to be a bit more precise about how it’s defined.
 

@@ -1,0 +1,5 @@
+(executable
+ (name gen_atom)
+ (preprocess
+  (pps ppx_deriving_yojson))
+ (libraries syndic uri unix ptime bos odoc.odoc yojson ISO8601))

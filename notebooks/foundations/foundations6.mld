@@ -366,6 +366,7 @@ or higher precision). A number of modern languages provide exception handling.
   exception NoChange of int
 # raise Failure;;
   Exception: Failure.
+  Called from Topeval.load_lambda in file "toplevel/byte/topeval.ml", line 89, characters 4-14
 ]}
 
 Each [exception] declaration introduces a distinct sort of exception, which can

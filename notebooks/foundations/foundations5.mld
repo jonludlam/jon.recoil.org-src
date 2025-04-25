@@ -16,10 +16,10 @@ volume to sorting and searching!  {{: https://algs4.cs.princeton.edu/home/} Sedg
 also covers sorting.  Sorting has countless applications.
 
 Sorting a collection allows items to be found quickly.  Recall that linear
-search requires $O(n)$ steps to search among $n$ items.  A sorted collection
-admits {e binary search} which requires only $O(\log n)$ time.  The idea
+search requires {m O(n)} steps to search among {m n} items.  A sorted collection
+admits {e binary search} which requires only {m O(\log n)} time.  The idea
 of binary search is to compare the item being sought with the middle item (in
-position $n/2$) and then to discard either the left half or the right,
+position {m n/2}) and then to discard either the left half or the right,
 depending on the result of the comparison.  Binary search needs arrays or
 trees, not lists; we shall come to binary search trees later.
 
@@ -39,20 +39,20 @@ As a concrete basis for comparison, runtimes are quoted for DECstation
 computers.  (These were based on the MIPS chip, an early RISC design.)
 
 {1 How Fast Can We Sort?}
-{ul {- typically count {e comparisons} $C(n)$
-}{- there are $n!$ permutations of $n$ elements
-}{- each comparison eliminates {e half} of the permutations $2^\{C(n)\}\geq n!$
-}{- therefore $C(n)\geq \log(n!)\approx n\log n-1.44n$
+{ul {- typically count {e comparisons} {m C(n)}
+}{- there are {m n!} permutations of {m n} elements
+}{- each comparison eliminates {e half} of the permutations {m 2^\{C(n)\}\geq n!}
+}{- therefore {m C(n)\geq \log(n!)\approx n\log n-1.44n}
 }}
 
 The usual measure of efficiency for sorting algorithms is the number of
-comparison operations required.  Mergesort requires only $O(n\log n)$
-comparisons to sort an input of $n$ items.  It is straightforward to prove
+comparison operations required.  Mergesort requires only {m O(n\log n)}
+comparisons to sort an input of {m n} items.  It is straightforward to prove
 that this complexity is the best possible.  There
-are $n!$ permutations of $n$ elements and each comparison distinguishes two
-permutations.  The lower bound on the number of comparisons, $C(n)$, is
-obtained by solving $2^\{C(n)\}\geq n!$; therefore $C(n)\geq \log(n!)\approx
-n\log n-1.44n$.
+are {m n!} permutations of {m n} elements and each comparison distinguishes two
+permutations.  The lower bound on the number of comparisons, {m C(n)}, is
+obtained by solving {m 2^\{C(n)\}\geq n!}; therefore {m C(n)\geq \log(n!)\approx
+n\log n-1.44n}.
 
 In order to compare the sorting algorithms, we use the {{: http://www.firstpr.com.au/dsp/rand31/p1192-park.pdf} following source} of
 pseudo-random numbers. Never mind how this works: generating
@@ -135,7 +135,7 @@ We can now bind the identifier [rs] to a list of 10,000 random numbers.
 
 {1 Insertion Sort}
 
-An insert operation does $n/2$ comparisons on average.
+An insert operation does {m n/2} comparisons on average.
 
 {@ocamltop[
 # let rec ins x = function
@@ -145,7 +145,7 @@ An insert operation does $n/2$ comparisons on average.
   val ins : 'a -> 'a list -> 'a list = <fun>
 ]}
 
-{e Insertion sort} takes $O(n^2)$ comparisons on average:
+{e Insertion sort} takes {m O(n^2)} comparisons on average:
 
 {@ocamltop[
 # let rec insort = function
@@ -158,7 +158,7 @@ Items from the input are copied one at a time to the output.  Each new item is
 inserted into the right place so that the output is always in order.
 
 We could easily write iterative versions of these functions, but to no purpose.
-Insertion sort is slow because it does $O(n^2)$ comparisons (and a lot of list
+Insertion sort is slow because it does {m O(n^2)} comparisons (and a lot of list
 copying), not because it is recursive.  Its quadratic runtime makes it nearly
 useless: it takes 174 seconds for our example while the next-worst figure is
 1.4 seconds.
@@ -170,10 +170,10 @@ regarded as refinements of insertion sort.
 {1 Quicksort: The Idea}
 
 The Quicksort algorithm has the following flow:
-{ul {- Choose a {e pivot} element, $a$
+{ul {- Choose a {e pivot} element, {m a}
 }{- Divide to partition the input into two sublists:
-{ul {- those {e at most} $a$ in value
-}{- those {e exceeding} $a$
+{ul {- those {e at most} {m a} in value
+}{- those {e exceeding} {m a}
 }}
 }{- Conquer using recursive calls to sort the sublists
 }{- Combine the sorted lists by appending one to the other
@@ -181,9 +181,9 @@ The Quicksort algorithm has the following flow:
 
 Quicksort was invented by Sir Anthony Hoare, who works at Microsoft Research,
 Cambridge.  Quicksort works by {e divide and conquer,} a basic algorithm design
-principle.  Quicksort chooses from the input some value $a$, called the
-{e pivot}.  It partitions the remaining items into two parts: those $\leq a$, and
-those $>a$.  It sorts each part recursively, then puts the smaller part before
+principle.  Quicksort chooses from the input some value {m a}, called the
+{e pivot}.  It partitions the remaining items into two parts: those {m \leq a}, and
+those {m >a}.  It sorts each part recursively, then puts the smaller part before
 the greater.
 
 The cleverest feature of Hoare’s algorithm was that the partition could be done
@@ -220,20 +220,20 @@ third handles lists of two or more elements.  Often, lists of length up to five
 or so are treated as special cases to boost speed.
 
 The locally declared function [part] partitions the input using [a] as the
-pivot.  The arguments [l] and [r] accumulate items for the left ($\leq a$) and
-right ($>a$) parts of the input, respectively.
+pivot.  The arguments [l] and [r] accumulate items for the left ({m \leq a}) and
+right ({m >a}) parts of the input, respectively.
 
-It is not hard to prove that quicksort does $n\log n$ comparisons, {e in the average case}
+It is not hard to prove that quicksort does {m n\log n} comparisons, {e in the average case}
 (see {{: https://archive.org/details/designanalysisof00ahoarich} page 94 of Aho}).  With random data, the pivot
 usually has an average value that divides the input in two approximately equal
-parts.  We have the recurrence $T(1) = 1$ and $T(n) = 2T(n/2)+n$, which is
-$O(n\log n)$.  In our example, it is about 235 times faster than insertion
+parts.  We have the recurrence {m T(1) = 1} and {m T(n) = 2T(n/2)+n}, which is
+{m O(n\log n)}.  In our example, it is about 235 times faster than insertion
 sort.
 
 In the worst case, quicksort’s running time is quadratic!  An example is when
 its input is almost sorted or reverse sorted.  Nearly all of the items end up
 in one partition; work is not divided evenly.  We have the recurrence
-$T(1) = 1$ and $T(n+1) = T(n)+n$, which is $O(n^2)$.  Randomising the input
+{m T(1) = 1} and {m T(n+1) = T(n)+n}, which is {m O(n^2)}.  Randomising the input
 makes the worst case highly unlikely.
 
 {1 Append-Free Quicksort}
@@ -286,12 +286,12 @@ Merge joins two sorted lists.
   val merge : 'a list * 'a list -> 'a list = <fun>
 ]}
 
-Generalises insert to two lists, and does at most $m+n-1$ comparisons.
+Generalises insert to two lists, and does at most {m m+n-1} comparisons.
 
 {e Merging} means combining two sorted lists to form a larger sorted list.
-It does at most $m+n$ comparisons, where $m$ and $n$ are the lengths of the
-input lists.  If $m$ and $n$ are roughly equal then we have a fast way of
-constructing sorted lists; if $n=1$ then merging degenerates to insertion,
+It does at most {m m+n} comparisons, where {m m} and {m n} are the lengths of the
+input lists.  If {m m} and {m n} are roughly equal then we have a fast way of
+constructing sorted lists; if {m n=1} then merging degenerates to insertion,
 doing much work for little gain.
 
 Merging is the basis of several sorting algorithms; we look at a
@@ -319,7 +319,7 @@ version is of little benefit for the same reasons that apply to
   Error: Unbound value take
 ]}
 
-$O(n\log n)$ comparisons in worst case
+{m O(n\log n)} comparisons in worst case
 
 Mergesort’s {e divide} stage divides the input not by choosing a pivot (as
 in quicksort) but by simply counting out half of the elements.  The
@@ -327,10 +327,10 @@ in quicksort) but by simply counting out half of the elements.  The
 stage involves merging.  Function [tmergesort] takes roughly 1.4
 seconds to sort the list [rs].
 
-In the worst case, mergesort does $O(n\log n)$ comparisons, with the same
+In the worst case, mergesort does {m O(n\log n)} comparisons, with the same
 recurrence equation as in quicksort’s average case.  Because [take] and
 [drop] divide the input in two equal parts (they differ at most by
-one element), we always have $T(n) = 2T(n/2)+n$.
+one element), we always have {m T(n) = 2T(n/2)+n}.
 
 Quicksort is nearly 3 times as fast in the example.  But it risks a
 quadratic worst case!  Merge sort is safe but slow.  So which algorithm is
@@ -343,23 +343,23 @@ initial order among the input, is to start with a list of increasing or
 decreasing runs of input items.
 
 {1 Summary of Sorting Algorithms}
-{ul {- Optimal is $O(n\log n)$ comparisons
+{ul {- Optimal is {m O(n\log n)} comparisons
 }{- Insertion sort: simple to code; too slow (quadratic) \[174 secs\]
 }{- Quicksort: fast on average; quadratic in worst case \[0.53 secs\]
 }{- Mergesort: optimal in theory; often slower than quicksort \[1.4 secs\]
 }{- {e Match the algorithm to the application}
 }}
 
-Quicksort’s worst case cannot be ignored.  For large $n$, a complexity of
-$O(n^2)$ is catastrophic.  Mergesort has an $O(n\log n)$ worst case running
+Quicksort’s worst case cannot be ignored.  For large {m n}, a complexity of
+{m O(n^2)} is catastrophic.  Mergesort has an {m O(n\log n)} worst case running
 time, which is optimal, but it is typically slower than quicksort for random
 data.
 
 Non-comparison sorting deserves mentioning.  We can sort a large number of
-small integers using their radix representation in $O(n)$ time.  This result
+small integers using their radix representation in {m O(n)} time.  This result
 does not contradict the comparison-counting argument because comparisons are
 not used at all.  Linear time is achievable only if the greatest integer is
-fixed in advance; as $n$ goes to infinity, increasingly many of the items
+fixed in advance; as {m n} goes to infinity, increasingly many of the items
 are the same.  It is a simple special case.
 
 Many other sorting algorithms exist. A few are outlined in the exercises.

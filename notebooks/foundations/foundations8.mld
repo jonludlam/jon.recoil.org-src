@@ -1,6 +1,8 @@
 {0 Lecture 8: Functions as Values}
 
-{@meta hidden[{}]}
+{@meta hidden[
+{}
+]}
 
 In OCaml, functions can be
 {ul {- passed as arguments to other functions,
@@ -9,17 +11,17 @@ In OCaml, functions can be
 }{- but {e not} tested for equality.
 }}
 
-{@ocaml[
+{@ocamltop[
 # [(fun n -> n * 2);
    (fun n -> n * 3);
-   (fun n -> n + 1)]
-- : (int -> int) list = [<fun>; <fun>; <fun>]
+   (fun n -> n + 1)];;
+  - : (int -> int) list = [<fun>; <fun>; <fun>]
 ]}
 
 Progress in programming languages can be measured by what abstractions they
 admit.  Conditional expressions (descended from conditional jumps based
 on the sign of some numeric variable) and parametric types such as
-$\alpha,\texttt\{list\}$ are examples.  The idea that functions could be used
+{m \alpha,\texttt{list}} are examples.  The idea that functions could be used
 as values in a computation arose early, but it took some time before the idea
 was fully realised.  Many programming languages let functions be passed as
 arguments to other functions, but few take the trouble needed to allow
@@ -45,14 +47,12 @@ If functions are to be regarded as computational values, then we need a
 notation for them.  The [fun] notation expresses a non-recursive function
 value without giving the function a name.
 
-$\tt fun;x;\rightarrow E$ is the function $f$ such that $f(x)=E$.
+{m \tt fun\;x\;\rightarrow E} is the function {m f} such that {m f(x)=E}.
 The function [fun n -> n*2] is a {e doubling function}.
 
-{@ocaml[
-# fun n -> n * 2
-- : int -> int = <fun>
-# (fun n -> n * 2) 17
-- : int = 34
+{@ocamltop[
+# fun n -> n * 2;;
+  - : int -> int = <fun>
 ]}
 
 The main purpose of [fun]-notation is to package up small expressions that are to be
@@ -60,24 +60,18 @@ applied repeatedly using some other function.
 The expression [fun n -> n*2] has the same value as the identifier
 [double], declared as follows:
 
-{@ocaml[
-# let double n = n * 2
-val double : int -> int = <fun>
+{@ocamltop[
+# let double n = n * 2;;
+  val double : int -> int = <fun>
 ]}
 
 The [fun] notation can also do pattern matching, and the [function] keyword
 adds an anonymous variable name to pattern match against.  The following functions
 are all equivalent, with the latter definitions bound to the [is_zero] value and the earlier ones anonymous:
 
-{@ocaml[
-# fun x -> match x with 0 -> true | _ -> false
-- : int -> bool = <fun>
-# function 0 -> true | _ -> false
-- : int -> bool = <fun>
-# let is_zero = fun x -> match x with 0 -> true | _ -> false
-val is_zero : int -> bool = <fun>
-# let is_zero = function 0 -> true | _ -> false
-val is_zero : int -> bool = <fun>
+{@ocamltop[
+# fun x -> match x with 0 -> true | _ -> false;;
+  - : int -> bool = <fun>
 ]}
 
 {1 Curried Functions}
@@ -85,28 +79,18 @@ val is_zero : int -> bool = <fun>
 A {e curried function} returns another function as its result. We use
 the string concetenation operator [(^)] to illustrate how this works.
 
-{@ocaml[
-# (^)
-- : string -> string -> string = <fun>
-# let prefix = fun a -> fun b -> a ^ b
-val prefix : string -> string -> string = <fun>
-# let promote = prefix "Senior "
-val promote : string -> string = <fun>
-# prefix "Junior " "Professor"
-- : string = "Junior Professor"
-# promote "Professor"
-- : string = "Senior Professor"
+{@ocamltop[
+# (^);;
+  - : string -> string -> string = <fun>
 ]}
 
 A short form for the definition of [prefix] is simply to pass multiple
 arguments to the function definition.  The following two definitions
 are equivalent in OCaml:
 
-{@ocaml[
-# let prefix = fun a -> fun b -> a ^ b
-val prefix : string -> string -> string = <fun>
-# let prefix a b = a ^ b
-val prefix : string -> string -> string = <fun>
+{@ocamltop[
+# let prefix = fun a -> fun b -> a ^ b;;
+  val prefix : string -> string -> string = <fun>
 ]}
 
 Currying is the technique of expressing a function taking multiple arguments as nested functions, each taking a single argument.
@@ -117,20 +101,16 @@ pattern-matching on pairs, writing [fun (n, k) -> n * 2 + k].
 
 Currying is an alternative, where we {e nest} the [fun]-notation:
 
-{@ocaml[
-# fun k -> fun n -> n * 2 + k
-- : int -> int -> int = <fun>
+{@ocamltop[
+# fun k -> fun n -> n * 2 + k;;
+  - : int -> int -> int = <fun>
 ]}
 
 Applying this curried function to the argument 1 yields another function, in which [k] has been replaced by 1:
 
-{@ocaml[
-# let fn = fun k -> fun n -> n * 2 + k
-val fn : int -> int -> int = <fun>
-# let fn' = fn 1 (* n * 2 + 1 *)
-val fn' : int -> int = <fun>
-# fn' 3  (* 3 * 2 + 1 *)
-- : int = 7
+{@ocamltop[
+# let fn = fun k -> fun n -> n * 2 + k;;
+  val fn : int -> int -> int = <fun>
 ]}
 
 And this function, when applied to 3, yields the result 7. The two arguments are supplied one after another.
@@ -146,42 +126,41 @@ A function-returning function is just a function of two arguments.
 
 This curried function syntax is nicer than nested [fun] binders:
 
-{@ocaml[
-# let prefix a b = a ^ b
-val prefix : string -> string -> string = <fun>
-# let dub = prefix "Sir "
-val dub : string -> string = <fun>
+{@ocamltop[
+# let prefix a b = a ^ b;;
+  val prefix : string -> string -> string = <fun>
 ]}
 
 Curried functions allows {e partial application} (to the first argument).
 
-In OCaml, an $n$-argument curried function [f] can be declared using the syntax:
+In OCaml, an {m n}-argument curried function [f] can be declared using the syntax:
 
-$$\tt let ; f ; x_1 : \ldots : x_\{n\} : = : E$$
+{math \tt let \; f \; x_1 \: \ldots \: x_{n} \: = \: E}
 
 and applied using the syntax:
 
-$$\tt ; E_1 ; \ldots ; E_n$$
+{math \tt \; E_1 \; \ldots \; E_n }
 
 If [f] is not recursive, then it is equivalent to the function expressed via nesting as follows:
 
-$$\tt fun ; x_1 ; \rightarrow \cdots \rightarrow fun ; x_\{n\} \rightarrow E $$
+{math \tt fun \; x_1 \; \rightarrow \cdots \rightarrow fun \; x_{n} \rightarrow E }
 
 We now have two ways of expressing functions of multiple arguments: either by
 passing a pair of arguments or by currying.  Currying allows {e partial application}
 which is useful when fixing the first argument yields a function
 that is interesting in its own right.  An example from mathematics is the
-function $x^y$, where fixing $y=2$ yields a function in $x$ alone, namely
-squaring. Similarly, $y=3$ yields cubing, while $y=1$ yields the identity
+function {m x^y}, where fixing {m y=2} yields a function in {m x} alone, namely
+squaring. Similarly, {m y=3} yields cubing, while {m y=1} yields the identity
 function.
 
 Though the function [hd] (which returns the head of a list) is not
 curried, it may be used with the curried application syntax in some
 expressions:
 
-{@ocaml[
-# List.hd [dub; promote] "Hamilton"
-- : string = "Sir Hamilton"
+{@ocamltop[
+# List.hd [dub; promote] "Hamilton";;
+  Line 1, characters 9-12:
+  Error: Unbound value dub
 ]}
 
 Here [List.hd] is applied to a list of functions, and the resulting function
@@ -191,7 +170,7 @@ executing code stored in data structures reaches its full development in
 
 {1 Partial Application: A Curried Insertion Sort}
 
-{@ocaml[
+{@ocamltop[
 # let insort lessequal =
     let rec ins x = function
       | [] -> [x]
@@ -202,8 +181,8 @@ executing code stored in data structures reaches its full development in
       | [] -> []
       | x::xs -> ins x (sort xs)
     in
-    sort
-val insort : ('a -> 'a -> bool) -> 'a list -> 'a list = <fun>
+    sort;;
+  val insort : ('a -> 'a -> bool) -> 'a list -> 'a list = <fun>
 ]}
 
 The sorting functions we discussed in earlier lectures are coded to sort floating-point
@@ -217,31 +196,23 @@ the function [sort] for sorting lists of that type of items.
 
 Some examples of its use:
 
-{@ocaml[
-# insort (<=) [5; 3; 9; 8]
-- : int list = [3; 5; 8; 9]
-# insort (<=) ["bitten"; "on"; "a"; "bee"]
-- : string list = ["a"; "bee"; "bitten"; "on"]
-# insort (>=) [5; 3; 9; 8]
-- : int list = [9; 8; 5; 3]
+{@ocamltop[
+# insort (<=) [5; 3; 9; 8];;
+  - : int list = [3; 5; 8; 9]
 ]}
 
 An obscure point: the syntax [(<=)] denotes the comparison operator as a
-function, which is then given to [insort].  Passing the relation $\geq$ for
+function, which is then given to [insort].  Passing the relation {m \geq} for
 [lessequal] gives a decreasing sort.  This is no coding trick; it is justified
-in mathematics, since if $\leq$ is a partial ordering then so is $\geq$.
+in mathematics, since if {m \leq} is a partial ordering then so is {m \geq}.
 
 {1 map: the “Apply to All” Function}
 
-{@ocaml[
+{@ocamltop[
 # let rec map f = function
     | [] -> []
-    | x::xs -> (f x) :: map f xs
-val map : ('a -> 'b) -> 'a list -> 'b list = <fun>
-# map (fun s -> s ^ "ppy") ["Hi"; "Ho"]
-- : string list = ["Hippy"; "Hoppy"]
-# map (map double) [[1]; [2; 3]]
-- : int list list = [[2]; [4; 6]]
+    | x::xs -> (f x) :: map f xs;;
+  val map : ('a -> 'b) -> 'a list -> 'b list = <fun>
 ]}
 
 The functional [map] applies a function to every element of a list,
@@ -251,11 +222,11 @@ again see the advantages of [fun]-notation, currying and
 [map].  If we did not have them, the first use of [map] in the above code block
 would require a preliminary function declaration:
 
-{@ocaml[
+{@ocamltop[
 # let rec sillylist = function
     | [] -> []
-    | s::ss -> (s ^ "ppy") :: sillylist ss
-val sillylist : string list -> string list = <fun>
+    | s::ss -> (s ^ "ppy") :: sillylist ss;;
+  val sillylist : string list -> string list = <fun>
 ]}
 
 An expression containing several applications of functionals---such as our
@@ -270,24 +241,24 @@ list functions.
 
 {1 Example: Matrix Transpose}
 
-$$
-\begin\{pmatrix\}
-a   & b & c \
-d   & e & f
-\end\{pmatrix\}^T =
-\begin\{pmatrix\}
-a & d     \
-b & e     \
-c & f
-\end\{pmatrix\}
-$$
+{math
+\begin{pmatrix}
+           a   & b & c \\
+           d   & e & f
+   \end{pmatrix}^T =
+   \begin{pmatrix}
+        a & d     \\
+        b & e     \\
+        c & f
+\end{pmatrix}
+}
 
-{@ocaml[
+{@ocamltop[
 # let rec transp = function
     | []::_ -> []
     | rows -> (map List.hd rows) ::
-              (transp (map List.tl rows))
-val transp : 'a list list -> 'a list list = <fun>
+              (transp (map List.tl rows));;
+  val transp : 'a list list -> 'a list list = <fun>
 ]}
 
 A matrix can be viewed as a list of rows, each row a list of matrix elements.
@@ -298,32 +269,32 @@ to deal with them by taking familiar matrix operations as examples.
 which presents surprisingly few difficulties.
 
 The transpose of the matrix
-$\left(\begin\{smallmatrix\} a & b & c \
-d & e & f\end\{smallmatrix\}\right)$
+{math \left(\begin{smallmatrix} a & b & c \\
+                           d & e & f\end{smallmatrix}\right)}
 is
-$\left(\begin\{smallmatrix\}
-a & d     \
-b & e     \
-c & f
-\end\{smallmatrix\}\right)$,
+{math \left(\begin{smallmatrix}
+        a & d     \\
+        b & e     \\
+        c & f
+   \end{smallmatrix}\right)}
 which in OCaml corresponds to the following transformation on lists of lists:
 
-$$
-\begin\{aligned\}
-\text\{\[\[a; b; c\]; \[d; e; f\]\]\} \Rightarrow& \text\{ \[\[a; d\]; \[b; e\]; \[c; f\]\]\}
-\end\{aligned\}
-$$
+{math
+\begin{aligned}
+\text{[[a; b; c]; [d; e; f]]} \Rightarrow& \text{ [[a; d]; [b; e]; [c; f]]}
+\end{aligned}
+}
 
 The workings of function [transp] are simple.  If [rows] is the
 matrix to be transposed, then [map hd] extracts its first column and
 [map tl] extracts its second column:
 
-$$
-\begin\{aligned\}
-\text\{map hd rows\} \Rightarrow & \text\{ \[a; d\]\}\
-\text\{map tl rows\} \Rightarrow & \text\{ \[\[b; c\]; \[e; f\]\]\}
-\end\{aligned\}
-$$
+{math
+\begin{aligned}
+\text{map hd rows} \Rightarrow & \text{ [a; d]}\\
+\text{map tl rows} \Rightarrow & \text{ [[b; c]; [e; f]]}
+\end{aligned}
+}
 
 A recursive call transposes the latter matrix, which is then given the column
 [[a; d]] as its first row.
@@ -332,53 +303,53 @@ separately.
 
 {1 Review of Matrix Multiplication}
 
-$$
-\begin\{pmatrix\} A_1 & \cdots & A_k \end\{pmatrix\}  \cdot
-\begin\{pmatrix\}
-B_1 \ \vdots \ B_k
-\end\{pmatrix\}   =
-\begin\{pmatrix\}
-A_1 B_1 + \cdots + A_k B_k
-\end\{pmatrix\}
-$$
+{math
+\begin{pmatrix} A_1 & \cdots & A_k \end{pmatrix}  \cdot
+   \begin{pmatrix}
+        B_1 \\ \vdots \\ B_k
+   \end{pmatrix}   =
+   \begin{pmatrix}
+        A_1 B_1 + \cdots + A_k B_k
+   \end{pmatrix}
+}
 
-The right side is the {e vector dot product} $\vec\{A\}\cdot \vec\{B\}$.
-Repeat for each {e row} of $A$ and {e column} of $B$.
+The right side is the {e vector dot product} {m \vec\{A\}\cdot \vec\{B\}}.
+Repeat for each {e row} of {m A} and {e column} of {m B}.
 
 The {e dot product} of two vectors is
-$$ (a_1,\ldots,a_k) \cdot (b_1,\ldots,b_k) = a_1b_1 + \cdots + a_kb_k $$
+{math (a_1,\ldots,a_k) \cdot (b_1,\ldots,b_k) = a_1b_1 + \cdots + a_kb_k }
 
-A simple case of matrix multiplication is when $A$ consists of a single row
-and $B$ consists of a single column.  Provided $A$ and $B$ contain the same
-number $k$ of elements, multiplying them yields a $1\times1$ matrix whose
+A simple case of matrix multiplication is when {m A} consists of a single row
+and {m B} consists of a single column.  Provided {m A} and {m B} contain the same
+number {m k} of elements, multiplying them yields a {m 1\times1} matrix whose
 single element is the dot product shown above.
 
-If $A$ is an $m\times k$ matrix and $B$ is a $k\times n$ matrix
-then $A\times B$ is an $m\times n$ matrix.
-For each $i$ and $j$, the $(i,j)$ element of $A\times B$ is the dot
-product of row $i$ of $A$ with column $j$ of $B$.
+If {m A} is an {m m\times k} matrix and {m B} is a {m k\times n} matrix
+then {m A\times B} is an {m m\times n} matrix.
+For each {m i} and {m j}, the {m (i,j)} element of {m A\times B} is the dot
+product of row {m i} of {m A} with column {m j} of {m B}.
 
-$$
-\begin\{pmatrix\}
-2 & 0 \
-3 &-1 \
-0 & 1 \
-1 & 1
-\end\{pmatrix\}
-\begin\{pmatrix\}
-1 & 0 & 2 \
-4 &-1 & 0
-\end\{pmatrix\}   =
-\begin\{pmatrix\}
-2 & 0 & 4 \
--1 & 1 & 6 \
-4 &-1 & 0 \
-5 &-1 & 2
-\end\{pmatrix\}
-$$
+{math 
+\begin{pmatrix}
+        2 & 0 \\
+        3 &-1 \\
+        0 & 1 \\
+        1 & 1
+   \end{pmatrix}
+   \begin{pmatrix}
+        1 & 0 & 2 \\
+        4 &-1 & 0
+   \end{pmatrix}   =
+   \begin{pmatrix}
+        2 & 0 & 4 \\
+       -1 & 1 & 6 \\
+        4 &-1 & 0 \\
+        5 &-1 & 2
+\end{pmatrix}
+}
 
 The (1, 1) element above is computed by
-$$ (2,0)\cdot(1,4) = 2\times1 + 0\times4 = 2. $$
+{math (2,0)\cdot(1,4) = 2\times1 + 0\times4 = 2. }
 
 Coding matrix multiplication in a conventional programming language usually
 involves three nested loops.  It is hard to avoid mistakes in the subscripting,
@@ -388,38 +359,38 @@ which often runs slowly due to redundant internal calculations.
 
 {e Dot product} of two vectors---a {e curried function}
 
-{@ocaml[
+{@ocamltop[
 # let rec dotprod xs ys =
     match xs, ys with
     | [], [] -> 0.0
-    | x::xs, y::ys ->  (x *. y) +. (dotprod xs ys)
-Lines 2-4, characters 5-51:
-Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched:
-([], _::_)
-val dotprod : float list -> float list -> float = <fun>
+    | x::xs, y::ys ->  (x *. y) +. (dotprod xs ys);;
+  Lines 2-4, characters 4-50:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  ([], _::_)
+  val dotprod : float list -> float list -> float = <fun>
 ]}
 
 {e Matrix product}
 
-{@ocaml[
+{@ocamltop[
 # let rec matprod arows brows =
     let cols = transp brows in
-    map (fun row -> map (dotprod row) cols) arows
-val matprod : float list list -> float list list -> float list list = <fun>
+    map (fun row -> map (dotprod row) cols) arows;;
+  val matprod : float list list -> float list list -> float list list = <fun>
 ]}
 
-The [transp brows] converts $B$ into a list of columns, yielding a
-list whose elements are the columns of $B$.  Each row of $A\times B$ is
-obtained by multiplying a row of $A$ by the columns of $B$.
+The [transp brows] converts {m B} into a list of columns, yielding a
+list whose elements are the columns of {m B}.  Each row of {m A\times B} is
+obtained by multiplying a row of {m A} by the columns of {m B}.
 
-Because [dotprod] is curried, it can be applied to a row of $A$.  The
-resulting function is applied to all the columns of $B$.  We have another
+Because [dotprod] is curried, it can be applied to a row of {m A}.  The
+resulting function is applied to all the columns of {m B}.  We have another
 example of currying and partial application.
 
-The outer [map] applies [dotprod] to each row of $A$.  The inner
+The outer [map] applies [dotprod] to each row of {m A}.  The inner
 [map], using [fun]-notation, applies [dotprod row] to each
-column of $B$.  Compare with the version in {e ML for the Working
+column of {m B}.  Compare with the version in {e ML for the Working
 Programmer} (page 89) which does not use [map] and requires two
 additional function declarations.
 
@@ -428,19 +399,11 @@ Otherwise, exception [Match_failure] is raised.
 
 {1 List Functionals for Predicates}
 
-{@ocaml[
+{@ocamltop[
 # let rec exists p = function
   | [] -> false
-  | x::xs -> (p x) || (exists p xs)
-val exists : ('a -> bool) -> 'a list -> bool = <fun>
-# let rec filter p = function
-  | [] -> []
-  | x::xs ->
-      if p x then
-        x :: filter p xs
-      else
-        filter p xs
-val filter : ('a -> bool) -> 'a list -> 'a list = <fun>
+  | x::xs -> (p x) || (exists p xs);;
+  val exists : ('a -> bool) -> 'a list -> bool = <fun>
 ]}
 
 A {e predicate} is a {e boolean-valued} function.
@@ -453,11 +416,11 @@ searching immediately, thanks to the behaviour of the lazy [||] operator.
 Dually, we have a functional to test whether all list elements satisfy the
 predicate.  If it finds a counterexample then it, too, stops searching.
 
-{@ocaml[
+{@ocamltop[
 # let rec all p = function
   | [] -> true
-  | x::xs -> (p x) && all p xs
-val all : ('a -> bool) -> 'a list -> bool = <fun>
+  | x::xs -> (p x) && all p xs;;
+  val all : ('a -> bool) -> 'a list -> bool = <fun>
 ]}
 
 The [filter] functional, like [map], transforms lists.  It applies a
@@ -467,21 +430,18 @@ the list of elements satisfying the predicate.
 
 {1 Applications of the Predicate Functionals}
 
-{@ocaml[
+{@ocamltop[
 # let member y xs =
-    exists (fun x -> x=y) xs
-val member : 'a -> 'a list -> bool = <fun>
-# let inter xs ys =
-    filter (fun x -> member x ys) xs
-val inter : 'a list -> 'a list -> 'a list = <fun>
+    exists (fun x -> x=y) xs;;
+  val member : 'a -> 'a list -> bool = <fun>
 ]}
 
 {e Testing whether two lists have no common elements}
 
-{@ocaml[
+{@ocamltop[
 # let disjoint xs ys =
-    all (fun x -> all (fun y -> x<>y) ys) xs
-val disjoint : 'a list -> 'a list -> bool = <fun>
+    all (fun x -> all (fun y -> x<>y) ys) xs;;
+  val disjoint : 'a list -> 'a list -> bool = <fun>
 ]}
 
 The Lists lecture presented the function [member], which tests whether a
@@ -500,13 +460,13 @@ solving the problem at hand.  The levels of notation that we define should
 correspond to natural levels of abstraction in the problem domain.
 
 Historical Note:
-Alonzo Church’s $\lambda$-calculus gave a simple syntax, $\lambda$-notation,
+Alonzo Church’s {m \lambda}-calculus gave a simple syntax, {m \lambda}-notation,
 for expressing functions.  It is the direct precursor of OCaml’s
 [fun]-notation.  It was soon shown that his system was equivalent in
 computational power to Turing machines, and {e Church’s thesis} states that
 this defines precisely the set of functions that can be computed effectively.
 
-The $\lambda$-calculus had a tremendous influence on the design of functional
+The {m \lambda}-calculus had a tremendous influence on the design of functional
 programming languages.  McCarthy’s Lisp was something of a false start; it
 interpreted variable binding incorrectly, an error that stood for some 20
 years.  But in 1966, Peter Landin (of Queen Mary College, University of London)
@@ -516,15 +476,16 @@ sketched out the main features of functional languages.
 
 What does the following function do, and what are its uses?
 
-{@ocaml[
-let sw f x y = f y x
+{@ocamltop[
+# let sw f x y = f y x;;
+  val sw : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c = <fun>
 ]}
 
 {2 Exercise 8.2}
 
 There are many ways of combining orderings. The [lexicographic ordering] uses two keys for
 comparisons. It is specified by
-$$(x',y')<(x,y)\iff x'<x \vee (x'=x \wedge y'<y).$$
+{math (x',y')<(x,y)\iff x'<x \vee (x'=x \wedge y'<y).}
 Write an OCaml function to lexicographically combine two orderings, supplied as functions. Explain
 how it allows function [insort] to sort a list of pairs.
 
@@ -540,15 +501,16 @@ The type ['a option], declared below, can be viewed as a type of lists having at
 (It is typically used as an alternative to exceptions.) Declare an analogue of the function [map]
 for type ['a option].
 
-{@ocaml[
-type 'a option = None | Some of 'a
+{@ocamltop[
+# type 'a option = None | Some of 'a;;
+  type 'a option = None | Some of 'a
 ]}
 
 {2 Exercise 8.5}
 
 Recall the making change function of Lecture 4:
 
-{@ocaml[
+{@ocamltop[
 # let rec change till amt =
     match till, amt with
     | _       , 0   -> [ [] ]
@@ -559,8 +521,8 @@ Recall the making change function of Lecture 4:
                              | cs :: css -> (c::cs) :: allc css
                            in
                              allc (change (c::till) (amt - c)) @
-                                   change till amt
-val change : int list -> int -> int list list = <fun>
+                                   change till amt;;
+  val change : int list -> int -> int list list = <fun>
 ]}
 
 Function [allc] applies the function ‘cons a [c]’ to every element of a list. Eliminate it by

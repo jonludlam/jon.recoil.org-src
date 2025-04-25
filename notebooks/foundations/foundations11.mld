@@ -1,6 +1,8 @@
 {0 Lecture 11: Elements of Procedural Programming}
 
-{@meta hidden[{}]}
+{@meta hidden[
+{}
+]}
 
 {1 Procedural Programming}
 {ul {- Procedural programs can change the machine state.
@@ -54,20 +56,20 @@ updating that cell.
 The function [ref] creates references (also called
 “locations”).  Calling [ref] allocates a new location in memory.
 Initially, this location holds the value given by
-expression $E$.
+expression {m E}.
 
 The function [!], when applied to a reference, returns its contents.
 This operation is called {e dereferencing}.  Clearly [!] is not a
 mathematical function; its result depends upon the store.
 
-The assignment [P:=E] evaluates expression $P$, which must return a
-reference $p$, and $E$.  It stores at address $p$ the value of $E$.
+The assignment [P:=E] evaluates expression {m P}, which must return a
+reference {m p}, and {m E}.  It stores at address {m p} the value of {m E}.
 Syntactically, [:=] is a function and [P:=E] is an
 expression, even though it updates the store.  Like many functions that change
 the state, it returns the value [()] of type [unit].
 
-If $\tau$ is some OCaml type, then $\tau$ [ref] is the type of references
-to cells that can hold values of $\tau$.  Please do not confuse the type
+If {m \tau} is some OCaml type, then {m \tau} [ref] is the type of references
+to cells that can hold values of {m \tau}.  Please do not confuse the type
 [ref] with the function [ref].  This table of the primitive
 functions and their types might be useful:
 
@@ -80,17 +82,17 @@ functions and their types might be useful:
 
 {1 Trying Out References}
 
-{@ocaml[
-# let p = ref 5 (* create a reference *)
-val p : int ref = {contents = 5}
-# p := !p + 1   (* p now holds value 6 *)
-- : unit = ()
-# let ps = [ ref 77; p ]
-val ps : int ref list = [{contents = 77}; {contents = 6}]
-# List.hd ps := 3
-- : unit = ()
-# ps
-- : int ref list = [{contents = 3}; {contents = 6}]
+{@ocamltop[
+# let p = ref 5 (* create a reference *);;
+  val p : int ref = {contents = 5}
+# p := !p + 1   (* p now holds value 6 *);;
+  - : unit = ()
+# let ps = [ ref 77; p ];;
+  val ps : int ref list = [{contents = 77}; {contents = 6}]
+# List.hd ps := 3;;
+  - : unit = ()
+# ps;;
+  - : int ref list = [{contents = 3}; {contents = 6}]
 ]}
 
 The first line declares [p] to hold a reference to an integer,
@@ -100,7 +102,7 @@ admits assignment.  Assignment never changes [let] bindings: they are
 mentioned in its declaration unless superseded by a new usage of [p].
 Only the {e contents} of the reference is mutable.
 
-OCaml displays a reference value as [{contents=v}], where value $v$ is the
+OCaml displays a reference value as [{contents=v}], where value {m v} is the
 contents.  This notation is readable but gives us no way of telling whether
 two references holding the same value are actually the same reference.  To
 display a reference as a machine address has obvious drawbacks!
@@ -122,9 +124,9 @@ update [ps], only the contents of a reference in that list.
 
 {1 Commands: Expressions with Effects}
 {ul {- Basic commands update references, write to files, etc.
-}{- $C_1 ; \ldots ; C_n$ causes a series of expressions to be evaluated and returns the value of $C_n$.
+}{- {m C_1 ; \ldots ; C_n} causes a series of expressions to be evaluated and returns the value of {m C_n}.
 }{- A typical command returns the empty tuple: [()]
-}{- [if] $B$ [then] $C_1$ [else] $C_2$ behaves like the traditional control structure if $C_1$ and $C_2$ have effects.
+}{- [if] {m B} [then] {m C_1} [else] {m C_2} behaves like the traditional control structure if {m C_1} and {m C_2} have effects.
 }{- Other OCaml constructs behave naturally with commands, including [match] expressions and recursive functions.
 }}
 
@@ -133,8 +135,8 @@ effect on the state. All expressions denote some value, but they can return
 [()], which conveys no actual information.
 
 We need a way to execute one command after another.
-The construct $C_1 ; \ldots ; C_n$ evaluates the expressions $C_1$
-to $C_n$ in the order given and returns the value of $C_n$.  The values
+The construct {m C_1 ; \ldots ; C_n} evaluates the expressions {m C_1}
+to {m C_n} in the order given and returns the value of {m C_n}.  The values
 of the other expressions are discarded; their only purpose is to change the
 state.
 
@@ -147,11 +149,11 @@ systems programming language, BLISS (now long extinct).
 
 {1 Iteration: the [while] command}
 
-{@ocaml[
+{@ocamltop[
 # let tlopt = function
   | [] -> None
-  | _::xs -> Some xs
-val tlopt : 'a list -> 'a list option = <fun>
+  | _::xs -> Some xs;;
+  val tlopt : 'a list -> 'a list option = <fun>
 # let length xs =
     let lp  = ref xs in (* list of uncounted elements *)
     let np  = ref 0  in (* accumulated count *)
@@ -163,8 +165,8 @@ val tlopt : 'a list -> 'a list option = <fun>
           lp := xs;
           np := 1 + !np
     done;
-    !np (* the final count is returned *)
-val length : 'a list -> int = <fun>
+    !np (* the final count is returned *);;
+  val length : 'a list -> int = <fun>
 ]}
 
 Once we can change the state, we need to do so repeatedly.  Recursion can
@@ -176,10 +178,10 @@ Early programming languages provided little support for repetition.  The
 programmer had to set up loops using goto commands, exiting the loop using
 another goto controlled by an [if].  Modern languages provide a
 confusing jumble of looping constructs, the most fundamental of which is
-[while B do C].  The boolean expression $B$ is evaluated,
-and if true, command $C$ is executed and the command repeats.  If $B$
+[while B do C].  The boolean expression {m B} is evaluated,
+and if true, command {m C} is executed and the command repeats.  If {m B}
 evaluates to false then the [while] command terminates, perhaps without
-executing $C$ even once.
+executing {m C} even once.
 
 OCaml’s main looping construct is [while], which returns the value [()].  The
 function [length] declares references to hold the list under
@@ -198,9 +200,9 @@ result.
 
 {1 Private, Persistent References}
 
-{@ocaml[
-# exception TooMuch of int
-exception TooMuch of int
+{@ocamltop[
+# exception TooMuch of int;;
+  exception TooMuch of int
 # let makeAccount initBalance =
     let balance = ref initBalance in
     let withdraw amt =
@@ -211,8 +213,8 @@ exception TooMuch of int
          !balance
        end
     in
-    withdraw
-val makeAccount : int -> int -> int = <fun>
+    withdraw;;
+  val makeAccount : int -> int -> int = <fun>
 ]}
 
 As you may have noticed, OCaml’s programming style looks clumsy compared with
@@ -229,7 +231,7 @@ by the specified amount and returns the new balance.  You can pay money in by
 withdrawing a negative amount.  The [if]-construct prevents the account
 from going overdrawn, raising an exception.
 
-Look at the $\tt (E_1; E_2)$ construct in the {e else} part above.
+Look at the {m \tt (E_1; E_2)} construct in the {e else} part above.
 The first expression updates the account balance and returns the trivial
 value ().  The second expression, [!balance], returns the current
 balance but does not return the reference itself: that would allow
@@ -239,17 +241,18 @@ This example is based on one by Dr A C Norman.
 
 {1 Two Bank Accounts}
 
-{@ocaml[
-# let student = makeAccount 500
-val student : int -> int = <fun>
-# let director = makeAccount 4000000;
-val director : int -> int = <fun>
-# student 5        (* coach fare *)
-- : int = 495
-# director 150000  (* Tesla *)
-- : int = 3850000
-# student 500      (* oh oh *)
-Exception: TooMuch 5.
+{@ocamltop[
+# let student = makeAccount 500;;
+  val student : int -> int = <fun>
+# let director = makeAccount 4000000;;
+  val director : int -> int = <fun>
+# student 5        (* coach fare *);;
+  - : int = 495
+# director 150000  (* Tesla *);;
+  - : int = 3850000
+# student 500      (* oh oh *);;
+  Exception: TooMuch 5.
+  Called from Topeval.load_lambda in file "toplevel/byte/topeval.ml", line 89, characters 4-14
 ]}
 
 Each call to [makeAccount] returns a copy of [withdraw] holding
@@ -270,47 +273,47 @@ references, although {e object-oriented} languages take them as a basic theme.
 
 {1 OCaml Primitives for Arrays}
 
-{@ocaml[
-# [|"a"; "b"; "c"|] (* allocate a fresh string array *)
-- : string array = [|"a"; "b"; "c"|]
-# Array.make 3 'a'   (* array[3] with cell containing 'a' *)
-- : char array = [|'a'; 'a'; 'a'|]
-# let aa = Array.init 5 (fun i -> i * 10) (* array[5] initialised to (fun i) *)
-val aa : int array = [|0; 10; 20; 30; 40|]
-# Array.get aa 3  (* retrieve the 4th cell in the array *)
-- : int = 30
-# Array.set aa 3 42 (* set the 4th cell's value to 42 *)
-- : unit = ()
+{@ocamltop[
+# [|"a"; "b"; "c"|] (* allocate a fresh string array *);;
+  - : string array = [|"a"; "b"; "c"|]
+# Array.make 3 'a'   (* array[3] with cell containing 'a' *);;
+  - : char array = [|'a'; 'a'; 'a'|]
+# let aa = Array.init 5 (fun i -> i * 10) (* array[5] initialised to (fun i) *);;
+  val aa : int array = [|0; 10; 20; 30; 40|]
+# Array.get aa 3  (* retrieve the 4th cell in the array *);;
+  - : int = 30
+# Array.set aa 3 42 (* set the 4th cell's value to 42 *);;
+  - : unit = ()
 ]}
 
 There are many other array operations in the [Array] module in the OCaml standard
 library.
 
-{@ocaml[
-# Array.make
-- : int -> 'a -> 'a array = <fun>
-# Array.init
-- : int -> (int -> 'a) -> 'a array = <fun>
-# Array.get
-- : 'a array -> int -> 'a = <fun>
-# Array.set
-- : 'a array -> int -> 'a -> unit = <fun>
+{@ocamltop[
+# Array.make;;
+  - : int -> 'a -> 'a array = <fun>
+# Array.init;;
+  - : int -> (int -> 'a) -> 'a array = <fun>
+# Array.get;;
+  - : 'a array -> int -> 'a = <fun>
+# Array.set;;
+  - : 'a array -> int -> 'a -> unit = <fun>
 ]}
 
 OCaml arrays are like references that hold several elements instead of one.  The
-elements of an $n$-element array are designated by the integers from 0
-to $n-1$.  The $i$th array element is usually written $A.(i)$.
-If $\tau$ is a type then $\tau$ [array] is the
-type of arrays (of any size) with elements from $\tau$.
+elements of an {m n}-element array are designated by the integers from 0
+to {m n-1}.  The {m i}th array element is usually written {m A.(i)}.
+If {m \tau} is a type then {m \tau} [array] is the
+type of arrays (of any size) with elements from {m \tau}.
 
-Calling [Array.init n f] creates an array of the size specified in $n$
-by function $f$.  Initially, element $A.(i)$ holds the value of $f(i)$ for $i=0$, \ldots,~$n-1$.
+Calling [Array.init n f] creates an array of the size specified in {m n}
+by function {m f}.  Initially, element {m A.(i)} holds the value of {m f(i)} for {m i=0, \ldots, ~n-1}.
 Like [ref], it allocates mutable storage to hold the specified values.
 
-Calling [Array.get A i] returns the contents of $A.(i)$.
+Calling [Array.get A i] returns the contents of {m A.(i)}.
 
-Calling [Array.set A i E] modifies the array $A$ by storing the
-value of $E$ as the new contents of $A\[i\]$; it returns [()] as its value.
+Calling [Array.set A i E] modifies the array {m A} by storing the
+value of {m E} as the new contents of {m A\[i\]}; it returns [()] as its value.
 
 OCaml’s arrays are much safer than C’s. In C, an array is nothing more than an
 address indicating the start of a storage area. Nothing indicates the size of
@@ -327,19 +330,21 @@ element (which actually has subscript 2) is inspected and found to be four. The
 second call to [Array.get] supplies a subscript that is out of range, so OCaml
 rejects it.
 
-{@ocaml[
-# let ar = Array.init 20 (fun i -> i * i)
-val ar : int array =
-  [|0; 1; 4; 9; 16; 25; 36; 49; 64; 81; 100; 121; 144; 169; 196; 225; 256;
+{@ocamltop[
+# let ar = Array.init 20 (fun i -> i * i);;
+  val ar : int array =
+    [|0; 1; 4; 9; 16; 25; 36; 49; 64; 81; 100; 121; 144; 169; 196; 225; 256;
+      289; 324; 361|]
+# Array.get ar 2;;
+  - : int = 4
+# Array.get ar 20;;
+  Exception: Invalid_argument "index out of bounds".
+  Raised by primitive operation at unknown location
+  Called from Topeval.load_lambda in file "toplevel/byte/topeval.ml", line 89, characters 4-14
+# Array.set ar 2 33; ar;;
+  - : int array =
+  [|0; 1; 33; 9; 16; 25; 36; 49; 64; 81; 100; 121; 144; 169; 196; 225; 256;
     289; 324; 361|]
-# Array.get ar 2
-- : int = 4
-# Array.get ar 20
-Exception: Invalid_argument "index out of bounds".
-# Array.set ar 2 33; ar
-- : int array =
-[|0; 1; 33; 9; 16; 25; 36; 49; 64; 81; 100; 121; 144; 169; 196; 225; 256;
-  289; 324; 361|]
 ]}
 
 By calling [Array.set], we then modify the element with subscript 2. Note
@@ -353,18 +358,18 @@ arrays. Many are analogous to functions on lists. For example,
 [Array.exists] takes a boolean-valued function and returns [true] if an
 array element satisfies it.
 
-{@ocaml[
-# Array.exists (fun i -> i > 200) ar
-- : bool = true
-# Array.exists (fun i -> i < 0) ar
-- : bool = false
+{@ocamltop[
+# Array.exists (fun i -> i > 200) ar;;
+  - : bool = true
+# Array.exists (fun i -> i < 0) ar;;
+  - : bool = false
 ]}
 
 {1 References: OCaml {e vs} conventional languages}
 {ul {- We must write [!p] to get the {e contents} of [p]
 }{- We write just [p] for the {e address} of [p]
 }{- We can store private reference cells (like [balance]) in functions---analogous to elements of {e object-oriented programming}
-}{- OCaml’s assignment syntax is $\tt V , := , E$ instead of $V$ = $E$
+}{- OCaml’s assignment syntax is {m \tt V , := , E} instead of {m V} = {m E}
 }{- OCaml has few control structures: [while], [match], [if] and [for] (the latter is not covered in this course)
 }{- OCaml has syntax for updating an array via the [a.(i) <- v] syntax which is the same as [Array.set a i v].
 }}
@@ -381,9 +386,9 @@ Dereferencing operators (like OCaml’s [!]) are especially unpopular, because
 they clutter the program text. Virtually all programming languages make dereferencing
 implicit (that is, automatic).
 
-It is generally accepted these days that a two-dimensional array $A$ is nothing
+It is generally accepted these days that a two-dimensional array {m A} is nothing
 but an array of arrays.  An assignment to such an array is typically written
-something like $A\[i,j\] \{:=\} x$; in C, the syntax is [A[i][j] = x]. Higher
+something like {m A\[i,j\] \{:=\} x}; in C, the syntax is [A[i][j] = x]. Higher
 dimensions are treated analogously.  The corresponding OCaml code can either
 declare an array of arrays, or use the [A.(i)] syntax to calculate the linear
 offset into a single array.
@@ -391,11 +396,11 @@ offset into a single array.
 You can use the constructs we have learnt to easily create linked (mutable) lists as
 an alternative to arrays.
 
-{@ocaml[
+{@ocamltop[
 # type 'a mlist =
   | Nil
-  | Cons of 'a * 'a mlist ref
-type 'a mlist = Nil | Cons of 'a * 'a mlist ref
+  | Cons of 'a * 'a mlist ref;;
+  type 'a mlist = Nil | Cons of 'a * 'a mlist ref
 ]}
 
 It is worth mentioning that OCaml’s references fully suffice for coding the sort of linked data structures
@@ -421,7 +426,7 @@ Write a version of function [power] (Lecture 1) using [while] instead of recursi
 
 {2 Exercise 11.3}
 
-What is the effect of $\tt while , C_1; ; B , do , C_2 , done$ ?
+What is the effect of {m \tt while , C_1; ; B , do , C_2 , done} ?
 
 {2 Exercise 11.4}
 
@@ -430,15 +435,15 @@ Write a function to exchange the values of two references, [xr] and [yr].
 {2 Exercise 11.5}
 
 Arrays of multiple dimensions are represented in OCaml by arrays of arrays. Write functions to
-(a) create an $n\times n$ identity matrix, given $n$, and
-(b) to transpose an $m\times n$ matrix. Identity matrices have the following form:
-$$
-\left( \{
-\begin\{array\}\{cccc\}
-1 & 0 &  \cdots  & 0  \
-0 & 1 &  \cdots  & 0  \
-\vdots  &  \vdots  &  \ddots  &  \vdots   \
-0 & 0 &  \cdots  & 1  \
-\end\{array\}
-\} \right)
-$$
+(a) create an {m n\times n} identity matrix, given {m n}, and
+(b) to transpose an {m m\times n} matrix. Identity matrices have the following form:
+{math
+\left( {
+\begin{array}{cccc}
+1 & 0 &  \cdots  & 0  \\
+0 & 1 &  \cdots  & 0  \\
+\vdots  &  \vdots  &  \ddots  &  \vdots   \\
+0 & 0 &  \cdots  & 1  \\
+\end{array}
+} \right)
+}

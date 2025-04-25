@@ -1,12 +1,20 @@
 {0 Lecture 10: Queues and Search Strategies}
 
-{@meta hidden[{}]}
+{@meta hidden[
+{}
+]}
+
+{@ocaml hidden[
+type 'a tree = Lf | Br of 'a * 'a tree * 'a tree;;
+]}
+
+
 
 {1 Breadth-First v Depth-First Tree Traversal}
 {ul {- binary trees as {e decision trees}
 }{- look for {e solution nodes}
 {ul {- Depth-first: search one subtree in full before moving on
-}{- Breadth-first: search all nodes at level $k$ before moving to $k+1$
+}{- Breadth-first: search all nodes at level {m k} before moving to {m k+1}
 }}
 }{- finds {e all} solutions --- nearest first!
 }}
@@ -41,20 +49,20 @@ list.
 
 {1 Breadth-First Tree Traversal --- Using Append}
 
-{@ocaml[
+{@ocamltop[
 # let rec nbreadth = function
   | [] -> []
   | Lf :: ts -> nbreadth ts
   | Br (v, t, u) :: ts ->
-      v :: nbreadth (ts @ [t; u])
-val nbreadth : 'a tree list -> 'a list = <fun>
+      v :: nbreadth (ts @ [t; u]);;
+  val nbreadth : 'a tree list -> 'a list = <fun>
 ]}
 
 Keeps an {e enormous queue} of nodes of search, and is a wasteful use of [append].
 
 Breadth-first search can be inefficient, this naive implementation especially
-so.  When the search is at depth $d$ of the tree, the list contains all the
-remaining trees at depth $d$, followed by the subtrees (all at depth $d+1$) of
+so.  When the search is at depth {m d} of the tree, the list contains all the
+remaining trees at depth {m d}, followed by the subtrees (all at depth {m d+1}) of
 the trees that have already been visited.  At depth 10, the list could already
 contain 1024 elements.  It requires a lot of space, and aggravates this with a
 gross misuse of append.  Evaluating [ts@[t, u]] copies the long list
@@ -77,11 +85,11 @@ of adding elements to the tail.
 
 Our functional arrays are suitable, provided we
 augment them with a function to delete the first array element.  (See {e ML
-for the Working Programmer} page 156.)  Each operation would take $O(\log
-n)$ time for a queue of length $n$.
+for the Working Programmer} page 156.)  Each operation would take {m O(\log n)}
+time for a queue of length {m n}.
 
 We shall describe a representation of queues that is purely functional, based
-upon lists, and efficient.  Operations take $O(1)$ time when “amortized”:
+upon lists, and efficient.  Operations take {m O(1)} time when “amortized”:
 averaged over the lifetime of a queue.
 
 A conventional programming technique is to represent a queue by an array.  Two
@@ -90,25 +98,25 @@ end of the array.  The coding is somewhat tricky.  Worse, the length of the
 queue must be given a fixed upper bound.
 
 {1 Efficient Functional Queues: Idea}
-{ul {- Represent the queue $x_1; x_2; \ldots; x_m; y_n; \ldots; y_1$ by any {e pair of lists}
-$$ (\[x_1,x_2,\ldots,x_m\], ; \[y_1,y_2,\ldots,y_n\])$$
+{ul {- Represent the queue {m x_1; x_2; \ldots; x_m; y_n; \ldots; y_1} by any {e pair of lists}
+{math ([x_1,x_2,\ldots,x_m], [y_1,y_2,\ldots,y_n])}
 }{- Add new items to the {e rear list}
 }{- Remove items from {e front list} and if empty move {e rear} to {e front}
-}{- {e Amortized} time per operation is $O(1)$
+}{- {e Amortized} time per operation is {m O(1)}
 }}
 
 Queues require efficient access at both ends: at the front, for removal, and
 at the back, for insertion.  Ideally, access should take constant time,
-$O(1)$.  It may appear that lists cannot provide such access.  If
-[enq(q, x)] performs [q@[x]], then this operation will be $O(n)$.  We
+{m O(1)}.  It may appear that lists cannot provide such access.  If
+[enq(q, x)] performs [q@[x]], then this operation will be {m O(n)}.  We
 could represent queues by reversed lists, implementing [enq(q, x)] by
 [x::q], but then the [deq] and [qhd] operations would be
-$O(n)$.  Linear time is intolerable: a series of $n$ queue operations
-could then require $O(n^2)$ time.
+{m O(n)}.  Linear time is intolerable: a series of {m n} queue operations
+could then require {m O(n^2)} time.
 
 The solution is to represent a queue by a pair of lists, where
-$$ (\[x_1,x_2,\ldots,x_m\], , \[y_1,y_2,\ldots,y_n\]) $$
-represents the queue $x_1 x_2 \ldots x_m y_n \ldots y_1$.
+{math ([x_1,x_2,\ldots,x_m], [y_1,y_2,\ldots,y_n]) }
+represents the queue {m x_1 x_2 \ldots x_m y_n \ldots y_1}.
 
 The front part of the queue is stored in order, and the rear part is stored in
 reverse order.  The [enq] operation adds elements to the rear part
@@ -125,32 +133,32 @@ below.
 
 {1 Efficient Functional Queues: Code}
 
-{@ocaml[
+{@ocamltop[
 # type 'a queue =
-  | Q of 'a list * 'a list
-type 'a queue = Q of 'a list * 'a list
+  | Q of 'a list * 'a list;;
+  type 'a queue = Q of 'a list * 'a list
 # let norm = function
   | Q ([], tls) -> Q (List.rev tls, [])
-  | q -> q
-val norm : 'a queue -> 'a queue = <fun>
+  | q -> q;;
+  val norm : 'a queue -> 'a queue = <fun>
 # let qnull = function
   | Q ([], []) -> true
-  | _ -> false
-val qnull : 'a queue -> bool = <fun>
-# let enq (Q (hds, tls)) x = norm (Q (hds, x::tls))
-val enq : 'a queue -> 'a -> 'a queue = <fun>
-# exception Empty
-exception Empty
+  | _ -> false;;
+  val qnull : 'a queue -> bool = <fun>
+# let enq (Q (hds, tls)) x = norm (Q (hds, x::tls));;
+  val enq : 'a queue -> 'a -> 'a queue = <fun>
+# exception Empty;;
+  exception Empty
 # let deq = function
   | Q (x::hds, tls) -> norm (Q (hds, tls))
-  | _ -> raise Empty
-val deq : 'a queue -> 'a queue = <fun>
-# let qempty = Q ([], [])
-val qempty : 'a queue = Q ([], [])
+  | _ -> raise Empty;;
+  val deq : 'a queue -> 'a queue = <fun>
+# let qempty = Q ([], []);;
+  val qempty : 'a queue = Q ([], [])
 # let qhd = function
   | Q (x::_, _) -> x
-  | _ -> raise Empty
-val qhd : 'a queue -> 'a = <fun>
+  | _ -> raise Empty;;
+  val qhd : 'a queue -> 'a = <fun>
 ]}
 
 The datatype of queues prevents confusion with other pairs of lists.  The empty
@@ -163,29 +171,29 @@ call [norm] to normalise their result.
 Because queues are in normal form, their head is certain to be in their
 front part, so [qhd] looks there.
 
-Let us analyse the cost of an execution comprising (in any possible order) $n$
-[enq] operations and $n$ [deq] operations, starting with an
+Let us analyse the cost of an execution comprising (in any possible order) {m n}
+[enq] operations and {m n} [deq] operations, starting with an
 empty queue.  Each [enq] operation will perform one cons, adding an
 element to the rear part.  Since the final queue must be empty, each element
 of the rear part gets transferred to the front part.  The corresponding
 reversals perform one cons per element.  Thus, the total cost of the series of
-queue operations is $2n$ cons operations, an average of 2 per operation.  The
-amortized time is $O(1)$.
+queue operations is {m 2n} cons operations, an average of 2 per operation.  The
+amortized time is {m O(1)}.
 
 There is a catch.  The conses need not be distributed evenly; reversing a long
-list could take up to $n-1$ of them.  Unpredictable delays make the approach
+list could take up to {m n-1} of them.  Unpredictable delays make the approach
 unsuitable for {e real-time programming} where deadlines must be met.
 
 {1 Breadth-First Tree Traversal --- Using Queues}
 
-{@ocaml[
+{@ocamltop[
 # let rec breadth q =
     if qnull q then []
     else
       match qhd q with
       | Lf -> breadth (deq q)
-      | Br (v, t, u) -> v :: breadth (enq (enq (deq q) t) u)
-val breadth : 'a tree queue -> 'a list = <fun>
+      | Br (v, t, u) -> v :: breadth (enq (enq (deq q) t) u);;
+  val breadth : 'a tree queue -> 'a list = <fun>
 ]}
 
 This function implements the same algorithm as [nbreadth] but uses a different
@@ -200,25 +208,25 @@ For larger trees, the speedup would be greater.  Choosing the right data
 structure pays handsomely.
 
 {1 Iterative deepening: Another Exhaustive Search}
-{ul {- Breadth-first search examines $O(b^d)$ nodes:
-$$ 1 + b + \cdots + b^d = \{b^\{d+1\}-1 \over b-1\}
-\qquad \begin\{array\}\[c\]\{r\@\{\}l\}
-b & \{\} = \hbox\{branching factor\}\
-d & \{\} = \hbox\{depth\}
-\end\{array\}
-$$
-}{- Recompute nodes at depth $d$ instead of storing them
-}{- Time factor is $b/(b-1)$ if $b>1$; complexity is still $O(b^d)$
-}{- Space required at depth $d$ drops from $b^d$ to $d$
+{ul {- Breadth-first search examines {m O(b^d)} nodes:
+{math  1 + b + \cdots + b^d = {b^{d+1}-1 \over b-1}
+  \qquad \begin{array}[c]{r@{}l}
+            b & {} = \hbox{branching factor}\\
+            d & {} = \hbox{depth}
+          \end{array}
+}
+}{- Recompute nodes at depth {m d} instead of storing them
+}{- Time factor is {m b/(b-1)} if {m b>1}; complexity is still {m O(b^d)}
+}{- Space required at depth {m d} drops from {m b^d} to {m d}
 }}
 
 Breadth-first search is not practical for infinite trees: it uses too much
 space. Large parts of the tree have to be stored.
 Consider the slightly more general problem of searching trees whose
-branching factor is $b$ (for binary trees, $b=2$).  Then breadth-first search
-to depth $d$ examines $(b^\{d+1\}-1)/(b-1)$ nodes, which is $O(b^d)$, ignoring
-the constant factor of $b/(b-1)$.  Since all nodes that are examined are also
-stored, the space and time requirements are both $O(b^d)$.
+branching factor is {m b} (for binary trees, {m b=2}).  Then breadth-first search
+to depth {m d} examines {m (b^{d+1}-1)/(b-1)} nodes, which is {m O(b^d)}, ignoring
+the constant factor of {m b/(b-1)}.  Since all nodes that are examined are also
+stored, the space and time requirements are both {m O(b^d)}.
 
 {e Depth-first iterative deepening} combines the space efficiency of
 depth-first with the “nearest-first” property of breadth-first search.  It
@@ -226,16 +234,16 @@ performs repeated depth-first searches with increasing depth bounds, each time
 discarding the result of the previous search.  Thus it searches to depth 1,
 then to depth 2, and so on until it finds a solution.  We can afford to
 discard previous results because the number of nodes is growing exponentially.
-There are $b^\{d+1\}$ nodes at level $d+1$; if $b\geq2$, this number actually
+There are {m b^{d+1}} nodes at level {m d+1}; if {m b\geq2}, this number actually
 exceeds the total number of nodes of all previous levels put together, namely
-$(b^\{d+1\}-1) / (b-1)$.
+{m (b^{d+1}-1) / (b-1)}.
 
 {{: http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.91.288} Korf shows} that the time needed for iterative deepening to reach
-depth $d$ is only $b/(b-1)$ times that for breadth-first search, if $b>1$.
+depth {m d} is only {m b/(b-1)} times that for breadth-first search, if {m b>1}.
 This is a constant factor; both algorithms have the same time complexity,
-$O(b^d)$.  In typical applications where $b\geq2$ the extra factor of
-$b/(b-1)$ is quite tolerable.  The reduction in the space requirement is
-exponential, from $O(b^d)$ for breadth-first to $O(d)$ for iterative
+{m O(b^d)}.  In typical applications where {m b\geq2} the extra factor of
+{m b/(b-1)} is quite tolerable.  The reduction in the space requirement is
+exponential, from {m O(b^d)} for breadth-first to {m O(d)} for iterative
 deepening. Of course, this assumes that the tree itself is not stored in memory.
 
 {1 Another Abstract Data Type: Stacks}
@@ -302,7 +310,7 @@ Write a version of the function [breadth] using a nested [let] construction rath
 
 {2 Exercise 10.4}
 
-Iterative deepening is inappropriate if $b\approx1$, where $b$ is the branching factor. What search
+Iterative deepening is inappropriate if {m b\approx1}, where {m b} is the branching factor. What search
 strategy is appropriate in this case?
 
 {2 Exercise 10.5}

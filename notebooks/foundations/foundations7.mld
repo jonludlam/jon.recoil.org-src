@@ -1,6 +1,8 @@
 {0 Lecture 7: Dictionaries and Functional Arrays}
 
-{@meta hidden[{}]}
+{@meta hidden[
+{}
+]}
 
 {1 Dictionaries}
 {ul {- lookup: find an item in the dictionary
@@ -28,7 +30,7 @@ serve this role, as do OCaml’s modules. This course does not cover modules, an
 simply declare the dictionary operations individually.
 
 An {e association list} (a list of pairs) is the simplest dictionary representation.
-Lookup is by linear search, and therefore slow: $O(n)$. Association lists are
+Lookup is by linear search, and therefore slow: {m O(n)}. Association lists are
 only usable if there are few keys in use. However, they are general in that the
 keys do not need a concept of ordering, only equality.
 
@@ -49,7 +51,7 @@ To enter a new [(key, value)] pair, simply “cons” it to the list with [updat
 This takes constant time, which is the best we could hope for.  But the space
 requirement is huge: linear in the number of updates, not in the number of
 distinct keys. Obsolete entries are never deleted: that would require first
-finding them, increasing the update time from $O(1)$ to $O(n)$.
+finding them, increasing the update time from {m O(1)} to {m O(n)}.
 
 {1 Binary Search Trees}
 
@@ -59,9 +61,9 @@ A {e dictionary} associates {e values} (here, numbers) with {e keys}.
 
 Binary search trees are an important application of binary trees.  They work
 for keys that have a total ordering, such as strings.  Each branch of the tree
-carries a $(key, value)$ pair; its left subtree holds smaller keys; the right
+carries a {m (key, value)} pair; its left subtree holds smaller keys; the right
 subtree holds greater keys.  If the tree remains reasonably balanced, then
-update and lookup both take $O(\log n)$ for a tree of size $n$.  These times
+update and lookup both take {m O(\log n)} for a tree of size {m n}.  These times
 hold in the average case; given random data, the tree is likely to remain
 balanced.
 
@@ -74,7 +76,7 @@ decreasing order; there is a close resemblance to quicksort.  Building a binary
 search tree, then converting it to inorder, yields a sorting algorithm called
 {e treesort}.
 
-Self-balancing trees, such as Red-Black trees, attain $O(\log n)$ in the worst
+Self-balancing trees, such as Red-Black trees, attain {m O(\log n)} in the worst
 case.  They are complicated to implement.
 
 {1 Lookup: Seeks Left or Right}
@@ -94,7 +96,7 @@ exception Missing of string
 val lookup : string -> (string * 'a) tree -> 'a = <fun>
 ]}
 
-This has guaranteed $O(\log n)$ access time {e if} the tree is balanced!
+This has guaranteed {m O(\log n)} access time {e if} the tree is balanced!
 
 Lookup in the binary search tree goes to the left subtree if the desired
 key is smaller than the current one and to the right if it is greater.
@@ -121,7 +123,7 @@ constructor [None] for failure.
 val update : 'a -> 'b -> ('a * 'b) tree -> ('a * 'b) tree = <fun>
 ]}
 
-This is also $O(\log n)$ as it copies the path only, and {e not whole subtrees!}
+This is also {m O(\log n)} as it copies the path only, and {e not whole subtrees!}
 
 If you are familiar with the usual update operation for this sort of tree, you
 may wonder whether it can be implemented in OCaml, where there is no direct way to
@@ -134,9 +136,9 @@ other left unchanged.  The internal representation of trees ensures that
 unchanged parts of the tree are not copied, but {e shared}.
 Therefore, update copies only the path from the root to the new
 node.  Its time and space requirements, for a reasonably balanced tree, are
-both $O(\log n)$.
+both {m O(\log n)}.
 
-The comparison between $b$ and $a$ allows three cases:
+The comparison between {m b} and {m a} allows three cases:
 {ul {- smaller: update the left subtree; share the right
 }{- greater: update the right subtree; share the left
 }{- equal: update the label and share both subtrees
@@ -213,7 +215,7 @@ val postord : 'a tree * 'a list -> 'a list = <fun>
 One can prove equations relating each of these functions to its counterpart on
 the previous section.  For example:
 
-$$ \texttt\{inord\}(t, vs) = \texttt\{inorder\}(t) \@ vs $$
+{math \texttt{inord}(t, vs) = \texttt{inorder}(t) @ vs }
 
 These three types of tree traversal are related in that all are depth-first.
 They each traverse the left subtree in full before traversing the right
@@ -256,14 +258,14 @@ structures in order of decreasing generality and increasing efficiency:
 
 {1 Functional Arrays as Binary Trees}
 
-The path to element $i$ follows the {e binary code} for $i$ (its “subscript”).
+The path to element {m i} follows the {e binary code} for {m i} (its “subscript”).
 
 {%html: <img src="array1.png" alt=""/>%}
 
 This simple representation (credited to W. Braun) ensures that the tree is
-balanced.  Complexity of access is always $O(\log n)$, which is optimal.  For
+balanced.  Complexity of access is always {m O(\log n)}, which is optimal.  For
 actual running time, access to conventional arrays is much faster: it requires
-only a few hardware instructions.  Array access is often taken to be $O(1)$,
+only a few hardware instructions.  Array access is often taken to be {m O(1)},
 which (as always) presumes that hardware limits are never exceeded.
 
 The lower bound for array subscripts (or ``indices'') is one.  The upper bound starts at zero
@@ -271,12 +273,12 @@ The lower bound for array subscripts (or ``indices'') is one.  The upper bound s
 the diagram above should make it clear that these trees are always balanced:
 the left subtree can have at most one node more than the right subtree,
 recursively all the way down.  (This assumes that the array is defined for
-subscripts $1\ldots n$ with no gaps; an array defined only for odd numbers, for
+subscripts {m 1\ldots n} with no gaps; an array defined only for odd numbers, for
 example, would obviously be unbalanced.)
 
 The numbers in the diagram above are not the labels of branch nodes, but
 indicate the positions of array elements. For example, the label corresponding
-to $A\[2\]$ is at the position shown. The nodes of a functional array are
+to {m A\[2\]} is at the position shown. The nodes of a functional array are
 labelled with the data we want to store, not with these integers.
 
 {1 The Lookup Function}
@@ -326,7 +328,7 @@ binary is important is its role in algorithms: an [if-then-else] decision leads
 to binary branching.
 
 Data structures, such as trees, and algorithms, such as mergesort, use binary
-branching in order to reduce a cost from $O(n)$ to $O(\log n)$.  Two is the
+branching in order to reduce a cost from {m O(n)} to {m O(\log n)}.  Two is the
 smallest integer divisor that achieves this reduction.  (Larger divisors are
 only occasionally helpful, as in the case of B-trees, where they reduce the
 constant factor.)  The simplicity of binary arithmetic compared with decimal
@@ -363,7 +365,7 @@ arrays, where most subscript positions are undefined.) Exception [Subscript]
 indicates that the subscript position does not exist and cannot be created.
 This use of exceptions is not easily replaced by [None] and [Some].
 
-Note that there are two tests involving $k=1$.  If we have reached a leaf,
+Note that there are two tests involving {m k=1}.  If we have reached a leaf,
 it returns a branch, extending the array by one.  If we are still at a branch
 node, then the effect is to update an existing array element.
 
@@ -398,8 +400,8 @@ Code the delete function outlined in the previous exercise.
 
 {2 Exercise 7.6}
 
-Show that the functions [preorder], [inorder] and [postorder] all require $O(n^2)$ time in the worst
-case, where $n$ is the size of the tree.
+Show that the functions [preorder], [inorder] and [postorder] all require {m O(n^2)} time in the worst
+case, where {m n} is the size of the tree.
 
 {2 Exercise 7.7}
 

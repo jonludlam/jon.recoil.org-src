@@ -1,7 +1,25 @@
 {0 jon.recoil.org}
 
+Built using {{:https://github.com/ocaml/odoc}odoc}, the OCaml documentation generator. Because when you have a hammer...
+
 {1 Recent entries}
 
+- {{!/site/blog/2025/04/page-"odoc-3"}Odoc 3: So what?}
+- {{!/site/blog/2025/04/page-"meeting-the-team"}Meeting the Team}
 - {{!/site/blog/2025/04/page-"this-site"}This site}
 - {{!/site/blog/2025/03/page-"code-block-metadata"}Code Block Metadata}
 - {{!/site/blog/2025/03/page-"module-type-of"}The Road to Odoc 3: Module Type Of}
+
+{1 About me}
+
+{%html: <img src="/assets/jon.jpg" style="border-radius: 50%; margin-bottom: 1rem; display: block; max-width: 150px;" >%}
+
+Fellow of {{:https://www.chu.cam.ac.uk/}Churchill College}, SRA at {{:https://www.cl.cam.ac.uk/}Department of Computer Science and Technology},
+member of {{:https://www.cst.cam.ac.uk/research/eeg}Energy and Environment Group}, Bookfighter at the {{:https://nevermoor.fandom.com/wiki/Gobleian_Library}Gobleian Library},
+Professional Old Dude at {{:https://tarides.com/}Tarides}.
+
+Something something something... OCaml wins!
+
+{1 About this site}
+See {!/site/blog/2025/04/page-"this-site"} for more information about this site.
+

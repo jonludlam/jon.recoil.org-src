@@ -1,13 +1,15 @@
 {0 Lecture 9: Sequences, or Lazy Lists}
 
-{@meta hidden[{}]}
+{@meta hidden[
+{}
+]}
 
 {1 A Pipeline}
 
-$$
-\framebox\{\emph\{Producer\}\} \to \framebox\{\emph\{Filter\}\} \to\cdots\to
-\framebox\{\emph\{Filter\}\} \to \framebox\{\emph\{Consumer\}\}
-$$
+{math
+\boxed{Producer} \to \boxed{Filter} \to\cdots\to
+ \boxed{Filter} \to \boxed{Consumer}
+}
 {ul {- Produce sequence of items
 }{- Filter sequence in stages
 }{- Consume results as needed
@@ -74,29 +76,29 @@ input/output channels.  Let us call lazy lists {e sequences} instead.
 
 {1 Lazy Lists in OCaml}
 {ul {- The empty tuple [()] and its {e type} [unit]
-}{- Delayed version of $E$ is [fun () -> E]
+}{- Delayed version of {m E} is [fun () -> E]
 }}
 
-{@ocaml[
+{@ocamltop[
 # type 'a seq =
   | Nil
-  | Cons of 'a * (unit -> 'a seq)
-type 'a seq = Nil | Cons of 'a * (unit -> 'a seq)
-# let head (Cons (x, _)) = x
-Line 1, characters 10-27:
-Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched:
-Nil
-val head : 'a seq -> 'a = <fun>
-# let tail (Cons (_, xf)) = xf ()
-Line 1, characters 10-32:
-Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched:
-Nil
-val tail : 'a seq -> 'a seq = <fun>
+  | Cons of 'a * (unit -> 'a seq);;
+  type 'a seq = Nil | Cons of 'a * (unit -> 'a seq)
+# let head (Cons (x, _)) = x;;
+  Line 1, characters 9-26:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  Nil
+  val head : 'a seq -> 'a = <fun>
+# let tail (Cons (_, xf)) = xf ();;
+  Line 1, characters 9-31:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  Nil
+  val tail : 'a seq -> 'a seq = <fun>
 ]}
 
-$\tt Cons(x, xf)$ has {e head} $x$ and {e tail function} $xf$
+{m \tt Cons(x, xf)} has {e head} {m x} and {e tail function} {m xf}
 
 The primitive OCaml type [unit] has one element, which is
 written [()].  This element may be regarded as a 0-tuple, and
@@ -113,26 +115,26 @@ required.  It may:
 The empty tuple, like all tuples, is a constructor and is allowed in patterns;
 for example: [let f () = ...]
 
-In particular $\tt fun , () \rightarrow E$ is the function that takes an argument of
-type [unit] and returns the value of $E$ as its result.  Expression $E$
+In particular {m \tt fun , () \rightarrow E} is the function that takes an argument of
+type [unit] and returns the value of {m E} as its result.  Expression {m E}
 is not evaluated until the function is called, even though the only possible
-argument is [()].  The function simply delays the evaluation of $E$.
+argument is [()].  The function simply delays the evaluation of {m E}.
 
-{1 The Infinite Sequence: $k$, $k+1$, $k+2$, …}
+{1 The Infinite Sequence: {m k}, {m k+1}, {m k+2}, …}
 
-{@ocaml[
-# let rec from k = Cons (k, fun () -> from (k+1))
-val from : int -> int seq = <fun>
-# let it = from 1
-val it : int seq = Cons (1, <fun>)
-# let it = tail it
-val it : int seq = Cons (2, <fun>)
-# let it = tail it
-val it : int seq = Cons (3, <fun>)
+{@ocamltop[
+# let rec from k = Cons (k, fun () -> from (k+1));;
+  val from : int -> int seq = <fun>
+# let it = from 1;;
+  val it : int seq = Cons (1, <fun>)
+# let it = tail it;;
+  val it : int seq = Cons (2, <fun>)
+# let it = tail it;;
+  val it : int seq = Cons (3, <fun>)
 ]}
 
 Function [from] constructs the infinite sequence of integers starting
-from $k$.  Execution terminates because of the [fun] enclosing the
+from {m k}.  Execution terminates because of the [fun] enclosing the
 recursive call.  OCaml displays the tail of a sequence as [fun], which
 stands for some function value.  Each call to [tail] generates the next
 sequence element.  We could do this forever.
@@ -143,20 +145,20 @@ Lazy lists tend to have high overheads.
 
 {1 Consuming a Sequence}
 
-{@ocaml[
+{@ocamltop[
 # let rec get n s =
     match n, s with
     | 0, _            -> []
     | n, Nil          -> []
-    | n, Cons (x, xf) -> x :: get (n-1) (xf ())
-val get : int -> 'a seq -> 'a list = <fun>
+    | n, Cons (x, xf) -> x :: get (n-1) (xf ());;
+  val get : int -> 'a seq -> 'a list = <fun>
 ]}
 
-The above code gets the first $n$ elements as a list.
+The above code gets the first {m n} elements as a list.
 [xf ()] {e forces} evaluation.
 
 The function [get] converts a sequence to a list.  It takes the
-first $n$ elements; it takes all of them if $n<0$, which can terminate only if
+first {m n} elements; it takes all of them if {m n<0}, which can terminate only if
 the sequence is finite.
 
 In the last line of [get], the expression [xf()] calls the tail
@@ -165,17 +167,17 @@ function, demanding evaluation of the next element.  This operation is called
 
 {1 Sample Evaluation}
 
-$$
-\begin\{aligned\}
-\tt get(2,, from ; 6) \
-\tt get(2,, Cons(6, fun ; () \rightarrow from ; (6+1))) \
-\tt 6 :: get(1,, from ; (6+1)) \
-\tt 6 :: get(1,, Cons ; (7,, fun ; () \rightarrow from ; (7+1))) \
-\tt 6 :: 7 :: get(0,, Cons ; (8,, fun ; () \rightarrow from ; (8+1))) \
-\tt 6 :: 7 :: \[\] \
-\tt \[6; 7\]
-\end\{aligned\}
-$$
+{math
+\begin{aligned}
+\tt get(2,\, from \; 6) \\
+\tt get(2,\, Cons(6, fun \; () \rightarrow from \; (6+1))) \\
+\tt 6 :: get(1,\, from \; (6+1)) \\
+\tt 6 :: get(1,\, Cons \; (7,\, fun \; () \rightarrow from \; (7+1))) \\
+\tt 6 :: 7 :: get(0,\, Cons \; (8,\, fun \; () \rightarrow from \; (8+1))) \\
+\tt 6 :: 7 :: [] \\
+\tt [6; 7]
+\end{aligned}
+}
 
 Here we ask for two elements of the infinite sequence.  In fact, three
 elements are computed: 6, 7 and 8.  Our implementation is slightly too eager.
@@ -192,22 +194,22 @@ expression 6+1.
 
 {1 Joining Two Sequences}
 
-{@ocaml[
+{@ocamltop[
 # let rec appendq xq yq =
     match xq with
     | Nil -> yq
-    | Cons (x, xf) -> Cons(x, fun () -> appendq (xf ()) yq)
-val appendq : 'a seq -> 'a seq -> 'a seq = <fun>
+    | Cons (x, xf) -> Cons(x, fun () -> appendq (xf ()) yq);;
+  val appendq : 'a seq -> 'a seq -> 'a seq = <fun>
 ]}
 
 A more fair alternative:
 
-{@ocaml[
+{@ocamltop[
 # let rec interleave xq yq =
     match xq with
     | Nil -> yq
-    | Cons (x, xf) -> Cons (x, fun () -> interleave yq (xf ()))
-val interleave : 'a seq -> 'a seq -> 'a seq = <fun>
+    | Cons (x, xf) -> Cons (x, fun () -> interleave yq (xf ()));;
+  val interleave : 'a seq -> 'a seq -> 'a seq = <fun>
 ]}
 
 Most list functions and functionals have analogues on sequences, but strange
@@ -225,7 +227,7 @@ elements.  Interleaving is the right way to combine two potentially infinite
 information sources into one.
 
 In both function declarations, observe that each [xf ()] is enclosed
-within a $\{\tt fun () \rightarrow \ldots\}$.  Each {e force} is enclosed within a
+within a {m \{\tt fun () \rightarrow \ldots\}}.  Each {e force} is enclosed within a
 {e delay}.  This practice makes the functions lazy.  A force not enclosed
 in a delay, as in [get] above, runs the risk of evaluating the sequence
 in full.
@@ -234,23 +236,23 @@ in full.
 
 Filtering lazy lists:
 
-{@ocaml[
+{@ocamltop[
 # let rec filterq p = function
   | Nil -> Nil
   | Cons (x, xf) ->
       if p x then
         Cons (x, fun () -> filterq p (xf ()))
       else
-        filterq p (xf ())
-val filterq : ('a -> bool) -> 'a seq -> 'a seq = <fun>
+        filterq p (xf ());;
+  val filterq : ('a -> bool) -> 'a seq -> 'a seq = <fun>
 ]}
 
-The infinite sequence $x$, $f(x)$, $f(f(x))$, …
+The infinite sequence {m x}, {m f(x)}, {m f(f(x))}, …
 
-{@ocaml[
+{@ocamltop[
 # let rec iterates f x =
-    Cons (x, fun () -> iterates f (f x))
-val iterates : ('a -> 'a) -> 'a -> 'a seq = <fun>
+    Cons (x, fun () -> iterates f (f x));;
+  val iterates : ('a -> 'a) -> 'a -> 'a seq = <fun>
 ]}
 
 The functional [filterq] demands elements of [xq] until it finds
@@ -264,45 +266,46 @@ next element not by adding one but by calling the function [f].
 
 {1 Numerical Computations on Infinite Sequences}
 
-{@ocaml[
-# let next a x = (a /. x +. x) /. 2.0
-val next : float -> float -> float = <fun>
+{@ocamltop[
+# let next a x = (a /. x +. x) /. 2.0;;
+  val next : float -> float -> float = <fun>
 ]}
 
 Close enough?
 
-{@ocaml[
+{@ocamltop[
 # let rec within eps = function
   | Cons (x, xf) ->
       match xf () with
       | Cons (y, yf) ->
           if abs_float (x -. y) <= eps then y
-          else within eps (Cons (y, yf))
-Lines 3-6, characters 7-41:
-Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched:
-Nil
-Lines 1-6, characters 22-41:
-Warning 8 [partial-match]: this pattern-matching is not exhaustive.
-Here is an example of a case that is not matched:
-Nil
-val within : float -> float seq -> float = <fun>
+          else within eps (Cons (y, yf));;
+  Lines 3-6, characters 6-40:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  Nil
+  
+  Lines 1-6, characters 21-40:
+  Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+  Here is an example of a case that is not matched:
+  Nil
+  val within : float -> float seq -> float = <fun>
 ]}
 
 Square Roots:
 
-{@ocaml[
-# let root a = within 1e6 (iterates (next a) 1.0)
-val root : float -> float = <fun>
+{@ocamltop[
+# let root a = within 1e6 (iterates (next a) 1.0);;
+  val root : float -> float = <fun>
 ]}
 
 The {e Newton-Raphson method} is widely used for computing square roots.
-The infinite series $x_0, (a/x_0+x_0)/2, \ldots\{\}$ converges rapidly to $\sqrt\{a\}$.
-The initial approximation, $x_0$, is typically retrieved from a table, and is accurate enough
+The infinite series {m x_0, (a/x_0+x_0)/2, \ldots{}} converges rapidly to {m \sqrt{a}}.
+The initial approximation, {m x_0}, is typically retrieved from a table, and is accurate enough
 that only a few iterations of the method are necessary.
 Calling [iterates (next a) x0] generates the {e infinite series} of
-approximations to the square root of $a$ using the Newton-Raphson method.
-To compute $\sqrt2$, the resulting series begins 1, 1.5, 1.41667, 1.4142157, 1.414213562, …,
+approximations to the square root of {m a} using the Newton-Raphson method.
+To compute {m \sqrt2}, the resulting series begins 1, 1.5, 1.41667, 1.4142157, 1.414213562, …,
 and this last figure is already accurate to 10 significant digits!
 
 Function [within] searches down the lazy list for two points whose
@@ -313,7 +316,7 @@ functions over sequences.  The point is to build programs from small,
 interchangeable parts.
 
 Function [root] uses [within], [iterates] and [next] to
-to apply Newton-Raphson with a tolerance of $10^\{-6\}$
+to apply Newton-Raphson with a tolerance of {m 10^\{-6\}}
 and a (poor) initial approximation of 1.0.
 
 This treatment of numerical computation has received some attention in the
@@ -328,10 +331,11 @@ Code an analogue of [map] for sequences.
 Consider the list function [concat], which concatenates a list of lists to form a single list. Can
 it be generalised to concatenate a sequence of sequences? What can go wrong?
 
-{@ocaml[
-let rec concat = function
-| [] -> []
-| l::ls -> l @ concat ls
+{@ocamltop[
+# let rec concat = function
+  | [] -> []
+  | l::ls -> l @ concat ls;;
+  val concat : 'a list list -> 'a list = <fun>
 ]}
 
 {2 Exercise 9.3}

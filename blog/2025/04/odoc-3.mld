@@ -1,0 +1,105 @@
+{0 Odoc 3: So what?}
+
+{@meta hidden[{
+  other_config: {published: "20250425T12:00:00Z"}
+}]}
+
+Odoc 3 was {{:https://discuss.ocaml.org/t/ann-odoc-3-0-released/16339}released last month}
+and although we did write a list of the new features, I don't think we've made
+it clear enough why anyone should care.
+
+It's {b manuals}, the theme of Odoc 3 is {b manuals}. It's got a load of
+features to make it much better for writing [mld] pages (files written using
+odoc's markup) to document your packages and their relationship to the
+surrounding ecosystem. Previous versions of Odoc were very library-centric,
+in that while we did have mld-file support, most of the effort went into
+making sure that we were generating correct per-module pages, which show the
+shape of your API even if you've not put in any doc comments at all. We've
+still got that, obviously, but we've added many features to make write [mld]
+pages far more useful, and we're really hoping that these will draw people in
+to make documenting packages a much more enjoyable experience.
+
+{1 Odoc's special skill: links!}
+
+But why you might want to use Odoc at all for your package's manuals, rather
+than, say, markdown, asciidoc, rst or any other similar language? The biggest
+thing that Odoc brings, and has always brought, is {b reliable linking}. Just
+write [{!Module.func}] and Odoc will check that the target exists and ensure
+that the link goes to the correct place, no matter how complex the definition
+of [Module] is or what the layout of the docs. We can link to almost all
+elements of an OCaml library, from modules and types through to fields of
+records, exceptions and extensions, and we have facilities for disambiguating,
+so if you happen to have both a module [S] and a module type [S] you can easily
+link to whichever you please.
+
+In Odoc 2 though, these links were pretty limited -  the only ones possible
+were only those to docs and API elements (modules, types, values, etc) in your
+own package, or to API elements in any libraries that your package depends on.
+When writing API docs, which tend to be at the level of types and functions,
+this wasn't a huge problem, but when considering manuals this turned out to be
+a really limiting constraint. For example, in Odoc's own docs, we really want
+to have a link to [odoc-driver], but since [odoc-driver] is a separate package
+and depends upon [odoc], the only way to do that in Odoc 2.x would be to use an
+ HTML link. With Odoc 3, this constraint is gone, so you can {b link to any
+ other package or library}. The link to [odoc-driver] would look like
+ [{!/odoc-driver/page-index}], as can be seen in
+ {{: https://github.com/ocaml/odoc/blob/master/doc/driver.mld#L10} odoc's source}.
+ The only requirement is that you must be able to simultaneously install all of
+ the packages you'd like to link to, so you can't easily link to, for example,
+ different versions of the same package.
+
+This will be particularly useful for any projects that's grouped into multiple
+packages. For example, the {{:https://mirage.io}Mirage project}. The main
+package there -- [mirage] -- is actually right at the bottom of the dependency
+hierarchy, but it's the perfect place to have docs that link to all of the
+other Mirage packages. On a smaller scale, the
+{{:https://github.com/ocaml-multicore/picos}Picos project} consists of multiple
+packages all from a single git repository, and this would allow the docs pages
+from the [picos] package to link to any of the other packages.
+
+Of course there are also a lot of other new features in this release, which are
+called out in the {{: https://discuss.ocaml.org/t/ann-odoc-3-beta-release/16043} annoucement post on discuss}, 
+some of which I may post about in the future.
+
+{1 Can I use it now?}
+
+Of course! These new features can be used right now, so long as you're happy to
+ self-host the docs. All that's needed is to create a switch containing all the
+ packages you're interested in together, and use [odoc_driver] to generate the
+ HTML and push them to your web server. At time of writing though, ocaml.org is
+ still using Odoc 2.4, so any packages that are published to opam that choose
+ to use these new features will be missing the new features. Furthermore, it's
+ actually quite a challenge to do this, since we'll have to extend the
+ package-universe solutions to include all relevant packages, for which we need
+ extra fields in the opam metadata.
+
+{1 What's next?}
+
+We're actively working on getting Odoc 3 into the pipeline generating the docs
+found in https://ocaml.org/p/. This will bring with it some of the developments
+that landed in Odoc 2, but didn't make it onto ocaml.org - for example, the
+rendering of source pages. Not only are there challenges related to the
+package-universe solutions as mentioned above, but the storage requirements are
+considerably larger, so I'll be working with
+{{: https://tunbury.org/} Mark Elvers} to complete this project.
+
+We've also got work to do to update the build rules in dune to take advantage
+of these features. While [odoc_driver] works very well as part of the process
+of deploying a docs site, it's quite impractical as a tool to help while you're
+actually writing the docs. For that, we'll need to make sure [dune] understands
+how to use these new features. Fortunately we've had some experience with those
+rules in the past, and part of the work that's gone into Odoc 3 was to ensure
+that incremental build rules should be far more straightforward to write than
+for Odoc 2. In addition, some of the logic that previously only existed in
+{{:https://github.com/ocaml-doc/voodoo}Voodoo} - the old driver that builds
+docs for ocaml.org - has been integrated into [odoc] itself, meaning one again
+that getting dune to produce correct docs for non-dune packages (e.g. the
+standard library!) should again be simpler.
+
+After we've done these, there are plans afoot to make more improvements to the
+manual writing experience. {{: https://choum.net/} \@panglesd} has been
+investigating how to add admonitions to the language, I've been thinking about
+custom tag support, we're looking at the
+{{:https://discuss.ocaml.org/t/ann-oxidizing-ocaml-an-update/15237}modes} work
+coming from Jane Street to see how to support that. There's plenty more to do,
+so if you'd like to lend a hand, reach out and join in!
