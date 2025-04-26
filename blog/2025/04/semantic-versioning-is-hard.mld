@@ -6,8 +6,11 @@
 
 {{: https://semver.org} Semantic versioning} is a lovely and simple idea that,
 if it were reliably implemented everywhere, would make life a lot simpler. So,
-is it possible to make our OCaml libraries stick to this scheme? Unfortunately
-it turns out to be a lot trickier than it seems.
+is it possible to make our OCaml libraries stick to this scheme? There are some
+projects that are trying to do this, including one recently mentored by {{:https://choum.net}@panglesd} and
+{{:https://github.com/nathanreb}Nathan Reb} as part of the {{:https://www.outreachy.org}Outreachy} program.
+While this is a great start, there are some subtleties of the OCaml module system
+that make it a good deal more complex than in other languages.
 
 {1 opam-format.2.3.0 ≠ opam-format.2.3.0?}
 Let's take the case that hit me this morning. I've been working on
@@ -19,12 +22,12 @@ and building locally, but to deploy it to the infrastructure managed by
 image. So I issued the usual [docker build .] and after it churned through the
 setup stages and got on to building the project, it hit an error:
 
-{[
+{v
 File "src/solver/solver.ml", line 58, characters 75-98:
      let deps = List.map (fun pkg -> OpamPackage.Map.find pkg simple_deps) (OpamPackage.Set.to_list pkgs) in
 Error: Unbound value OpamPackage.Set.to_list
 Hint: Did you mean of_list?
-]}
+v}
 
 Now [OpamPackage] is a module in the [opam-format] library, which is easily
 discovered using the excellent
