@@ -1,0 +1,183 @@
+{0 Semantic Versioning in OCaml is Hard}
+
+{@meta hidden[{
+  other_config: {published: "20250420T12:00:00Z"}
+}]}
+
+{{: https://semver.org} Semantic versioning} is a lovely and simple idea that,
+if it were reliably implemented everywhere, would make life a lot simpler. So,
+is it possible to make our OCaml libraries stick to this scheme? Unfortunately
+it turns out to be a lot trickier than it seems.
+
+{1 opam-format.2.3.0 ≠ opam-format.2.3.0?}
+Let's take the case that hit me this morning. I've been working on
+{{: https://github.com/ocurrent/ocaml-docs-ci} ocaml-docs-ci} in order to bring
+the exciting new {{: https://ocaml.github.io/odoc} odoc 3} features to
+{{: https://ocaml.org/} ocaml.org} for everyone to enjoy. I have it checked out
+and building locally, but to deploy it to the infrastructure managed by
+{{: https://tunbury.org/} Mark Elvers} it needs to be packaged up into a Docker
+image. So I issued the usual [docker build .] and after it churned through the
+setup stages and got on to building the project, it hit an error:
+
+{[
+File "src/solver/solver.ml", line 58, characters 75-98:
+     let deps = List.map (fun pkg -> OpamPackage.Map.find pkg simple_deps) (OpamPackage.Set.to_list pkgs) in
+Error: Unbound value OpamPackage.Set.to_list
+Hint: Did you mean of_list?
+]}
+
+Now [OpamPackage] is a module in the [opam-format] library, which is easily
+discovered using the excellent
+{{: https://doc.sherlocode.com/?q=OpamPackage} Sherlodoc} tool, so I checked
+what version I had locally, and what version I had in the Docker container,
+and it turned out I was using exactly the same version -- 2.3.0 -- both
+locally and in the container. So what's going on?
+
+The problem is that the Dockerfile I was using was using OCaml version 4.14,
+whereas locally I was using OCaml 5.3. "But how on earth can this cause the API
+of [opam-format] to change?" I hear you wail! Well, this is actually one of the
+simpler outcomes of the way the OCaml module system works. Let's look at
+{{: https://github.com/ocaml/opam/blob/2.3.0/src/format/opamPackage.mli} the code}.
+
+The first thing we note is the absence of any definition of [Set] or [Map] here
+- where do they come from? It turns out they come from
+{{: https://github.com/ocaml/opam/blob/2.3.0/src/format/opamPackage.mli#L49} this line here}:
+
+{@ocaml[
+include OpamStd.ABSTRACT with type t := t
+]}
+
+So let's take a look over in [opamStd.mli] to see what that signature looks like:
+
+{@ocaml[
+(** A signature for handling abstract keys and collections thereof *)
+module type ABSTRACT = sig
+
+  type t
+
+  val compare: t -> t -> int
+  val equal: t -> t -> bool
+  val of_string: string -> t
+  val to_string: t -> string
+  val to_json: t OpamJson.encoder
+  val of_json: t OpamJson.decoder
+
+  module Set: SET with type elt = t
+  module Map: MAP with type key = t
+end
+]}
+
+OK, so we've found the definitions of [Set] and [Map] - they refer to signatures
+[SET] and [MAP] which are defined just above in
+{{: https://github.com/ocaml/opam/blob/2.3.0/src/core/opamStd.mli#L17-L98} opamStd.mli}.
+Let's just look at [Set] since that's where the problem was:
+
+{@ocaml[
+module type SET = sig
+
+  include Set.S
+
+  val map: (elt -> elt) -> t -> t
+
+  val is_singleton: t -> bool
+
+  (** Returns one element, assuming the set is a singleton. Raises [Not_found]
+      on an empty set, [Failure] on a non-singleton. *)
+  val choose_one : t -> elt
+
+  val choose_opt: t -> elt option
+
+  val of_list: elt list -> t
+  val to_list_map: (elt -> 'b) -> t -> 'b list
+  val to_string: t -> string
+  val to_json: t OpamJson.encoder
+  val of_json: t OpamJson.decoder
+  val find: (elt -> bool) -> t -> elt
+  val find_opt: (elt -> bool) -> t -> elt option
+
+  (** Raises Failure in case the element is already present *)
+  val safe_add: elt -> t -> t
+
+  (** Accumulates the resulting sets of a function of elements until a fixpoint
+      is reached *)
+  val fixpoint: (elt -> t) -> t -> t
+
+  (** [map_reduce f op t] applies [f] to every element of [t] and combines the
+      results using associative operator [op]. Raises [Invalid_argument] on an
+      empty set, or returns [default] if it is defined. *)
+  val map_reduce: ?default:'a -> (elt -> 'a) -> ('a -> 'a -> 'a) -> t -> 'a
+
+  module Op : sig
+    val (++): t -> t -> t (** Infix set union *)
+
+    val (--): t -> t -> t (** Infix set difference *)
+
+    val (%%): t -> t -> t (** Infix set intersection *)
+  end
+
+end
+]}
+
+Sure enough, there's no [to_list] function defined in there. Once again though,
+there's an [include Set.S] in there. It turns out that that refers to the [Set]
+module in the OCaml standard library. We can again
+{{: https://github.com/ocaml/ocaml/blob/5.3.0/stdlib/set.mli} look at the source}:
+
+{@ocaml[
+val to_list : t -> elt list
+    (** [to_list s] is {!elements}[ s].
+        @since 5.1 *)
+]}
+
+And there it is. The [to_list] function has only been in the [Set] module since
+version 5.1.
+
+{1 Using ocaml.org docs}
+It was pretty difficult to figure that out from the source, but happily there's
+a better way. We can browse the docs on https://ocaml.org/ - We can look at the
+docs for the {{: https://ocaml.org/p/opam-format/2.3.0/doc/OpamPackage/Set/index.html} OpamPackage.Set module}
+which, as of today, does not contain any [to_list] function. The [include Set.S]
+is there with the expansion showing all of the types and values coming from it,
+so we can click on the [Set.S] link on the include line which takes us to the
+documentation for the stdlib from OCaml 4.11.2. Changing the version from the
+dropdown at the top to something more recent takes us to a page containing the
+[to_list] function with the helpful [since 5.1] annotation.
+
+This is, in fact, a relatively simple example of the sorts of issues that can
+occur that make semantic versioning a headache. In this example, it was a
+change due to a difference in the compiler version used, but there's nothing
+particularly special about that - a package may expose signatures derived from
+any of its dependencies! So is there anything we can do about this? Obviously,
+yes!
+
+{1 Towards a solution}
+
+Step 1 of any approach to solving this is to be able to identify which bits of a libraries API come from which
+packages, and therefore which versions of those packages. It turns out there may well be a nice way to piggy-back on a recent
+feature from Odoc, which was originally intended to help with suppressing
+suprious warnings.
+
+The problem we were tackling was that if your library ends
+up exporting a module whose signature is defined in someone else's package,
+then any warnings that come from it are unfixable. To fix this we added a tag
+to each signature of a module that indicates which package it originally came
+from. Odoc is then very careful to keep track of this as it performs its 
+signature manipulations, resulting in an accurate way to know which signature
+elements came from which package. This fixed the problem of the spurious
+warnings nicely. 
+
+Quite separately, we've got the docs CI that is attempting to build docs for
+every version of every package. Obviously given the above, in order to
+exhaustively show all the possible APIs of every library, we should build 
+all possible combinations of every version of every package. Clearly we can't
+possibly do this, so the docs CI focuses on the goal of building at least one
+solution for every version of every package. 
+
+Now if you combine these two ideas, we can use the builds of the packages 
+with the tracking of the package of the originating signatures to be able to
+precisely track the differences in API between different versions of a
+package. This would allow us to build a database of those changes, and with
+this in hand we can look at what APIs are used in any other package and be
+able to suggest upper and lower bounds on the versions of its dependencies.
+
+Now wouldn't that be cool?

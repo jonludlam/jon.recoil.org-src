@@ -1,0 +1,62 @@
+{0 OCaml-Docs-CI and Odoc 3}
+
+{@meta hidden[{
+  other_config: {published: "20250425T12:00:00Z"}
+}]}
+
+The release of Odoc 3 means that we need to update the {{!https://docs.ci.ocaml.org}docs-ci}
+project so that the documentation that appears on {{!https://ocaml.org/p/}ocaml.org}
+is using the latest, greatest Odoc. With this major release of Odoc, it's also
+time to give the CI pipeline a bit of an overhaul too, and fix some of the
+irritations that it causes. 
+
+{1 The challenge of documenting OCaml}
+
+As I blogged about {{!/site/blog/2025/04/page-"semantic-versioning-is-hard"}recently}, the
+APIs of OCaml libraries are dependent not only on the version of its package, but possibly
+also on the versions of any of its dependencies. Due to this fact, to produce the docs for
+ocaml.org means that sometimes we need to build the docs for a particular version of a
+particular package multiple times with different versions of its dependencies. 
+
+It's clearly impractical to try to build every possible combination, so what we do is to
+run the opam solver once for each version of each package. This gives us a set of packages
+at particular versions. We then take that, and for each package in the set, we pluck out {i 
+its} dependencies from the set, producing a "universe" of dependencies for every package
+in the set. Let's look at a very simple example; the package [cry] from the 
+{{:https://www.liquidsoap.info}LiquidSoap} project.
+
+The oldest version of [cry] from before the {{:https://discuss.ocaml.org/t/opam-repository-archival-phase-1-unavailable-packages/15797/6}Great Purge} was
+0.2.2, which when solved produced the following dependencies:
+
+{v
+cry.0.2.2
+ocaml.4.05.0
+ocaml-base-compiler.4.05.0
+ocaml-config.1
+ocamlfind.1.9.6
+v}
+
+and the oldest version of [cry] after the purge is 0.6.0 which produces the following
+solution:
+
+{v
+cry.0.6.0
+ocaml.5.2.1
+ocaml-base-compiler.5.2.1
+ocaml-config.3
+ocamlfind.1.9.6
+v}
+
+so we we can see from these two solutions that we'll need to build [ocamlfind.1.9.6] twice,
+once with [ocaml.4.05.0] and once with [ocaml.5.2.1].
+
+Once we've got, for every version of every package, a set of dependency universes, we choose
+one of these to be the one presented to the user under the [ocaml.org/p/] hierarchy. For all
+of the other universes, we build the package againt them, and put the docs under the [ocaml.org/u/]
+hierarchy. 
+
+{1 Performing the builds}
+Once we've got a complete set of solutions and builds to do, the 
+
+
+

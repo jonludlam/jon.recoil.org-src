@@ -13,6 +13,7 @@ COPY blog /build/blog
 COPY notebooks /build/notebooks
 COPY scripts /build/scripts
 COPY static /build/static
+COPY reference /build/reference
 COPY dune-project index.mld /build/
 RUN sudo chown opam:opam -R /build
 RUN mkdir -p /build/_tmp/_odoc /build/_tmp/html/assets
@@ -21,7 +22,7 @@ RUN echo foo
 RUN opam upgrade odoc_notebook
 WORKDIR /build
 RUN opam exec -- odoc_notebook opam core patience_diff astring brr note --output _tmp/html
-RUN opam exec -- odoc_notebook generate `find blog -name "*.mld"` `find notebooks -name "*.mld"` index.mld --output _tmp/html --odoc-dir _tmp/_odoc 
+RUN opam exec -- odoc_notebook generate `find blog -name "*.mld"` `find notebooks -name "*.mld"` index.mld reference/index.mld --output _tmp/html --odoc-dir _tmp/_odoc 
 RUN opam install syndic ptime ISO8601
 RUN opam exec -- dune exec -- scripts/gen_atom.exe
 RUN mv atom.xml _tmp/html

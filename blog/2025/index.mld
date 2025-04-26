@@ -3,6 +3,7 @@
 @children_order 04/ 03/
 
 - {{!/site/blog/2025/04/page-"odoc-3"}Odoc 3: So what?}
+- {{!/site/blog/2025/04/page-"semantic-versioning-is-hard"}Semantic Versioning in OCaml is Hard}
 - {{!/site/blog/2025/04/page-"meeting-the-team"}Meeting the Team}
 - {{!/site/blog/2025/04/page-"this-site"}This site}
 - {{!/site/blog/2025/03/page-"code-block-metadata"}Code Block Metadata}
