@@ -93,7 +93,10 @@ let entry_of_mld odoc_file =
         let html = Odoc_html.Generator.items ~config ~resolve preamble in
         let content_fmt = Fmt.list (Tyxml.Html.pp_elt ()) in
         let content = Format.asprintf "%a" content_fmt html in
-        (String.concat "" title, content, url)
+        let title = Printf.sprintf "<a href=\"%s\">%s</a>" url (String.concat "" title) in
+        let content =
+          Printf.sprintf "%s<p>Continue reading <a href=\"%s\">here</a></p>" content url in
+        (title, content, url)
   in
 
   let meta =
@@ -110,7 +113,7 @@ let entry_of_mld odoc_file =
       exit 1
   in
 
-  Syndic.Atom.entry ~id:(Uri.of_string url) ~title:(Syndic.Atom.Text title)
+  Syndic.Atom.entry ~id:(Uri.of_string url) ~title:(Syndic.Atom.Html (None, title))
     ~published:(Option.get published) ~updated:(Option.get published)
     ~summary:(Syndic.Atom.Text "Summary")
     ~content:(Syndic.Atom.Html (None, content))
