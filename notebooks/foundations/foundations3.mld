@@ -1,9 +1,5 @@
 {0 Lecture 3: Lists}
 
-{@meta hidden[
-{}
-]}
-
 {1 Introduction}
 
 {@ocamltop autorun[

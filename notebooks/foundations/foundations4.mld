@@ -1,9 +1,5 @@
 {0 Lecture 4: More on Lists}
 
-{@meta hidden[
-{}
-]}
-
 {1 List Utilities: take and drop}
 
 This lecture examines more list utilities, illustrating more patterns of

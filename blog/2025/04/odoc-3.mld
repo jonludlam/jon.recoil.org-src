@@ -1,8 +1,6 @@
 {0 Odoc 3: So what?}
 
-{@meta hidden[{
-  other_config: {published: "20250425T12:00:00Z"}
-}]}
+@published 2025-04-25
 
 Odoc 3 was {{:https://discuss.ocaml.org/t/ann-odoc-3-0-released/16339}released last month}
 and although we did write a list of the new features, I don't think we've made

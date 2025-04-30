@@ -1,13 +1,11 @@
 {0 Semantic Versioning in OCaml is Hard}
 
-{@meta hidden[{
-  other_config: {published: "20250420T12:00:00Z"}
-}]}
+@published 2025-04-20
 
 {{: https://semver.org} Semantic versioning} is a lovely and simple idea that,
 if it were reliably implemented everywhere, would make life a lot simpler. So,
 is it possible to make our OCaml libraries stick to this scheme? There are some
-projects that are trying to do this, including one recently mentored by {{:https://choum.net}@panglesd} and
+projects that are trying to do this, including one recently mentored by {{:https://choum.net}panglesd} and
 {{:https://github.com/nathanreb}Nathan Reb} as part of the {{:https://www.outreachy.org}Outreachy} program.
 While this is a great start, there are some subtleties of the OCaml module system
 that make it a good deal more complex than in other languages.

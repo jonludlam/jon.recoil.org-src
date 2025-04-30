@@ -1,9 +1,5 @@
 {0 Lecture 2: Recursion and Efficiency}
 
-{@meta hidden[
-{}
-]}
-
 {1 Expression Evaluation}
 
 Expression evaluation concerns expressions and the values they return. This

@@ -1,8 +1,6 @@
 {0 OCaml-Docs-CI and Odoc 3}
 
-{@meta hidden[{
-  other_config: {published: "20250425T12:00:00Z"}
-}]}
+@published 2025-04-29
 
 The release of Odoc 3 means that we need to update the {{!https://docs.ci.ocaml.org}docs-ci}
 project so that the documentation that appears on {{!https://ocaml.org/p/}ocaml.org}
@@ -12,7 +10,7 @@ irritations that it causes.
 
 {1 The challenge of documenting OCaml}
 
-As I blogged about {{!/site/blog/2025/04/page-"semantic-versioning-is-hard"}recently}, the
+As I wrote about {{!/site/blog/2025/04/page-"semantic-versioning-is-hard"}recently}, the
 APIs of OCaml libraries are dependent not only on the version of its package, but possibly
 also on the versions of any of its dependencies. Due to this fact, to produce the docs for
 ocaml.org means that sometimes we need to build the docs for a particular version of a
@@ -56,7 +54,24 @@ of the other universes, we build the package againt them, and put the docs under
 hierarchy. 
 
 {1 Performing the builds}
-Once we've got a complete set of solutions and builds to do, the 
+Once we've got a complete set of solutions and builds to do, the current CI pipeline batches
+the builds up to try and build as many packages as possible in as few builds as possible. 
+While this works well enough, it does mean that we build a lot packages more than once - 
+dune, for example, is built thousands of times during this process, producing exactly the same
+binaries each time. 
 
+In the new pipeline, I wrote a {{:https://github.com/jonludlam/opamh}little tool} that allows
+opam packages to be archived and restored, which happens to work nicely because we're always
+building the packages in the same container in the same location. This means there are no
+worries about relocatability, although that is something that is {{:https://www.dra27.uk/blog/platform/2025/04/22/branching-out.html}nearly here!}
 
+The downside to this is that our storage requirements are quite a bit larger, as we're storing
+the entire package rather than just the bits that odoc needs. However, we were always going to
+use more storage than before simply because the new [odoc] and [odoc_driver] pair are
+more capable, and the new features like {{:https://github.com/ocaml/odoc/pull/909}source code rendering}
+and {{:https://github.com/ocaml/odoc/pull/1121/files#diff-10c8829023814c0bcc3316f95f643623404c000b13c68849ef3d61097a6e03a6R1-R415}classify}
+require more files from the original package.
+
+The upshot is that I'll be working with {{:https://www.tunbury.org/}Mark Elvers} to move the
+docs CI from its current machine to a shiny new {{:https://www.tunbury.org/blade-reallocation/}blade server}.
 

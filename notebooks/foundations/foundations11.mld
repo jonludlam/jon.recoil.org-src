@@ -1,9 +1,5 @@
 {0 Lecture 11: Elements of Procedural Programming}
 
-{@meta hidden[
-{}
-]}
-
 {1 Procedural Programming}
 {ul {- Procedural programs can change the machine state.
 }{- They can interact with its environment

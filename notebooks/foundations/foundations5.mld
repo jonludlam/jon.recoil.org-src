@@ -1,7 +1,5 @@
 {0 Lecture 5: Sorting}
 
-{@meta hidden[{}]}
-
 A few applications for sorting and arranging items into order are:
 {ul {- search
 }{- merging

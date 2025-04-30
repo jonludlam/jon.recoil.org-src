@@ -1,9 +1,6 @@
 {0 The Road to Odoc 3: Module Type Of}
 
-{@meta hidden[{
-other_config: {published: "20250308T12:00:00Z"}
-}]}
-
+@published 2025-03-08
 
 There are {{:https://discuss.ocaml.org/t/ann-odoc-3-beta-release/16043}many new and improved features}
 that Odoc 3 brings, but there are also a large number of bugfixes. I thought I'd write about one in

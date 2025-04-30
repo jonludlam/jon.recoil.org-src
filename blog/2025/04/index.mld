@@ -1,6 +1,6 @@
 {0 April}
 
-@children_order odoc-3 semantic-versioning-is-hard meeting-the-team this-site
+@children_order ocaml-docs-ci-and-odoc-3 odoc-3 semantic-versioning-is-hard meeting-the-team this-site
 
 - {{!/site/blog/2025/04/page-"odoc-3"}Odoc 3: So what?}
 - {{!/site/blog/2025/04/page-"semantic-versioning-is-hard"}Semantic Versioning in OCaml is Hard}

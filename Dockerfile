@@ -12,8 +12,8 @@ RUN opam install core base bos odoc_notebook odoc-driver patience_diff astring b
 RUN sudo mkdir -p /build/_tmp/_odoc /build/_tmp/html/assets
 RUN sudo chown opam:opam -R /build
 RUN cd /build && opam exec -- odoc_driver --odoc-dir _tmp/_odoc --odocl-dir _tmp/_odoc --html-dir _tmp/html --packages-dir reference --lib-map _tmp/_odoc/lib_map.json
-RUN opam exec -- odoc_notebook opam core patience_diff astring brr note --output _tmp/html
-RUN echo foo
+WORKDIR /build
+RUN opam exec -- odoc_notebook opam core patience_diff astring brr note mime_printer --output _tmp/html
 COPY blog /build/blog
 COPY notebooks /build/notebooks
 COPY scripts /build/scripts
@@ -22,7 +22,6 @@ COPY reference /build/reference
 COPY dune-project index.mld /build/
 RUN sudo chown opam:opam -R /build
 RUN opam upgrade odoc_notebook
-WORKDIR /build
 RUN opam exec -- odoc_notebook generate `find blog -name "*.mld"` `find notebooks -name "*.mld"` index.mld reference/index.mld --output _tmp/html --odoc-dir _tmp/_odoc 
 RUN opam install syndic ptime ISO8601
 RUN opam exec -- dune exec -- scripts/gen_atom.exe

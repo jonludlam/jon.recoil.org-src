@@ -1,9 +1,7 @@
 {0 This site}
 
-{@meta hidden[
-{ other_config: {published: "20250407T12:00:00Z"},
-  libs: [ "mime_printer" ] }
-]}
+@libs mime_printer
+@published 2025-04-07
 
 I've spent a {e lot} of time over the past few years working on Odoc, the OCaml documentation
 generator, so when it came time to (re)start my own website and blog, I found it hard to resist

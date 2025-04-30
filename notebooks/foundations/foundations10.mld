@@ -1,9 +1,5 @@
 {0 Lecture 10: Queues and Search Strategies}
 
-{@meta hidden[
-{}
-]}
-
 {@ocaml hidden[
 type 'a tree = Lf | Br of 'a * 'a tree * 'a tree;;
 ]}

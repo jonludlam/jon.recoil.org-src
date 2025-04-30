@@ -1,9 +1,5 @@
 {0 Lecture 7: Dictionaries and Functional Arrays}
 
-{@meta hidden[
-{}
-]}
-
 {1 Dictionaries}
 {ul {- lookup: find an item in the dictionary
 }{- update (insert): replace (store) an item in the dictionary

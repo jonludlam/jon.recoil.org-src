@@ -8,15 +8,6 @@ let author =
 
 let updated = Unix.gettimeofday () |> Ptime.of_float_s |> Option.get
 
-type post_meta = { published : string; updated : string option [@default None] }
-[@@deriving yojson]
-
-type meta = {
-  libs : string list; [@default []]
-  html_scripts : string list; [@default []]
-  other_config : post_meta;
-}
-[@@deriving yojson]
 
 let entry_of_mld odoc_file =
   let report_error during msg =
@@ -36,21 +27,8 @@ let entry_of_mld odoc_file =
     | _ -> failwith "Can't handle non-pages"
   in
   let document = Odoc_document.Renderer.document_of_page ~syntax:OCaml page in
-  let meta =
-    List.find_map
-      (function
-        | { Odoc_model.Location_.value; _ } -> (
-            match value with
-            | `Code_block (Some "meta", meta, _, _) -> Some meta
-            | _ -> None))
-      page.content.elements
-  in
-  let meta =
-    match meta with
-    | Some { value; _ } -> value
-    | None -> report_error "parsing meta" "No meta block found"
-  in
-  let y = Yojson.Safe.from_string meta in
+  let frontmatter = page.frontmatter.Odoc_model.Frontmatter.other_config in
+  let published = try List.assoc "published" frontmatter with Not_found -> report_error "parsing frontmatter" "No published date found" in
   let title, content, url =
     match document with
     | Odoc_document.Types.Document.Source_page _ ->
@@ -99,17 +77,12 @@ let entry_of_mld odoc_file =
         (title, content, url)
   in
 
-  let meta =
-    match meta_of_yojson y with
-    | Ok m -> m
-    | Error m -> report_error "parsing meta" m
-  in
   let published =
     try
-      ISO8601.Permissive.datetime meta.other_config.published
+      ISO8601.Permissive.date published
       |> Ptime.of_float_s
     with _ ->
-      Format.eprintf "Error with '%s'" meta.other_config.published;
+      Format.eprintf "Error with '%s'" published;
       exit 1
   in
 

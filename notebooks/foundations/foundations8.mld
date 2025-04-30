@@ -1,9 +1,5 @@
 {0 Lecture 8: Functions as Values}
 
-{@meta hidden[
-{}
-]}
-
 In OCaml, functions can be
 {ul {- passed as arguments to other functions,
 }{- returned as results,

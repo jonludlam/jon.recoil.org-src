@@ -1,8 +1,6 @@
 {0 Meeting the Team}
 
-{@meta hidden[{
-  other_config: {published: "20250408T12:00:00Z"}
-}]}
+@published 2025-04-08
 
 It's tremendously exciting to be back in the {{:https://www.cst.cam.ac.uk/}Computer Laboratory}, 
 as the last time I worked here was just before the pandemic. I'm now a member of the {{:https://www.cst.cam.ac.uk/research/eeg}Energy and Environment Group}

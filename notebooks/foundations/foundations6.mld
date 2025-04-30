@@ -1,8 +1,6 @@
 {0 Lecture 6: Datatypes and Trees}
 
-{@meta hidden[
-{ libs: ["tyxml", "mime_printer", "tyxml.functor"] }
-]}
+@libs tyxml mime_printer tyxml.functor
 
 {@ocaml autorun hidden[
 module TreePrinter = struct
