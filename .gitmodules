@@ -1,0 +1,32 @@
+[submodule "vendor/odoc_notebook"]
+	path = vendor/odoc_notebook
+	url = git@github.com:jonludlam/odoc_notebook
+[submodule "vendor/odoc"]
+	path = vendor/odoc
+	url = git@github.com:jonludlam/odoc
+        branch = learno
+[submodule "vendor/merlin-js"]
+	path = vendor/merlin-js
+	url = git@github.com:jonludlam/merlin-js
+        branch = odoc_notebook
+[submodule "vendor/js_top_worker"]
+	path = vendor/js_top_worker
+	url = git@github.com:jonludlam/js_top_worker
+        branch = learno
+[submodule "vendor/js_of_ocaml"]
+	path = vendor/js_of_ocaml
+	url = git@github.com:jonludlam/js_of_ocaml/
+        branch = fs_fake_fix
+[submodule "vendor/jsoo-code-mirror"]
+	path = vendor/jsoo-code-mirror
+	url = git@github.com:jonludlam/jsoo-code-mirror
+        branch = rework-interface
+[submodule "vendor/mdx"]
+	path = vendor/mdx
+	url = git@github.com:jonludlam/mdx
+	branch = learno
+[submodule "vendor/mime_printer"]
+	path = vendor/mime_printer
+	url = git@github.com:jonludlam/mime_printer
+	branch = odoc_notebook
+
