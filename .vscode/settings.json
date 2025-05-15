@@ -10,5 +10,9 @@
         "**/.hg": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true
+    },
+    "ocaml.sandbox": {
+        "kind": "opam",
+        "switch": "/Users/jon/devel/learno"
     }
 }

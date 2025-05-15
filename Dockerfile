@@ -1,4 +1,7 @@
-FROM ocaml/opam:ubuntu-24.04-ocaml-5.1
+FROM ocaml/opam:ubuntu-24.04-ocaml-5.2
+#RUN echo ho
+#RUN sudo apt install -y build-essential autoconf
+#RUN opam switch create 5.2.0+flambda2 --repos with-extensions=git+https://github.com/janestreet/opam-repository.git#with-extensions,default 
 RUN opam pin add -n git+https://github.com/jonludlam/jsoo-code-mirror#rework-interface
 RUN echo yooo
 RUN opam pin add -n git+https://github.com/jonludlam/js_top_worker#learno

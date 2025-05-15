@@ -1,10 +1,8 @@
 {0 2025}
 
-@children_order 04/ 03/
+@children_order 05/ 04/ 03/
 
-- {{!/site/blog/2025/04/page-"odoc-3"}Odoc 3: So what?}
-- {{!/site/blog/2025/04/page-"semantic-versioning-is-hard"}Semantic Versioning in OCaml is Hard}
-- {{!/site/blog/2025/04/page-"meeting-the-team"}Meeting the Team}
-- {{!/site/blog/2025/04/page-"this-site"}This site}
-- {{!/site/blog/2025/03/page-"code-block-metadata"}Code Block Metadata}
-- {{!/site/blog/2025/03/page-"module-type-of"}The Road to Odoc 3: Module Type Of}
+- {{!/site/blog/2025/05/page-"ticks-solved-by-ai"}Solving First-year OCaml exercises with AI}
+- {{!/site/blog/2025/05/page-"oxcaml-gets-closer"}OxCaml is getting closer...}
+- {{!/site/blog/2025/05/page-"ai-for-climate-and-nature-day"}AI focused on Climate and Nature Day}
+- {{!/site/blog/2025/04/page-"ocaml-docs-ci-and-odoc-3"}OCaml Docs CI and Odoc 3}
