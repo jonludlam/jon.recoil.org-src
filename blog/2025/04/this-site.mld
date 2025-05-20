@@ -92,6 +92,9 @@ Mime_printer.push "image/svg" (String.concat "\n" svg);;
 style="fill:lime;stroke:purple;stroke-width:5;"/></svg> %}
 ]}
 
+Edit 2025-05-20: I have now got merlin working across cells, though I'm not convinced the current
+solution is the right long-term solution. S
+
 {2 Dynamic libraries}
 Currently the use of libraries it quite limited - they are defined more-or-less statically. I've had
 dynamic libraries working in the past, but I need to re-implement them. The plan is to have the
