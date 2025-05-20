@@ -1,0 +1,122 @@
+{0 Locality Mode OxCaml}
+
+@switch oxcaml
+
+{@ocaml[
+let f () =
+  let u @ local = [6; 2; 8] in (* mode *)
+  let len = Base.List.length u in
+  len;;
+]}
+
+{@ocaml[
+let f () =
+  let local_ u = [6; 2; 8] in
+  let len = Base.List.length u in
+  len;;
+]}
+
+{@ocaml[
+let f () =
+  let u : int list @@ local = stack_ [6; 2; 8] in (* modality *)
+  let len = Base.List.length u in
+  len;;
+]}
+
+{@ocaml[
+let f () =
+  let u = local_ [6; 2; 8] in
+  let len = Base.List.length u in
+  len;;
+]}
+
+Other keywords to spot: [stack_], [global_], [@ global], [exclave_] and [[@local_opt]]
+
+{1 {b Type}: what it is -; {b Mode}: how it's used}
+
+{t
+| Mode | Lifetime | Allocation |
+|----------------|-----------------|-----------------|
+| [global] or missing | MAY outlive its region | MUST be on the heap |
+| [local] | MUST NOT outlive its region | MAY be on the stack |
+
+- Region: compile-time representation of a stack frame
+  + Function bodies
+  + Loop bodies
+  + Lazy expressions
+  + Module level bindings
+- Inference decides how to allocate, defaults to the stack
+- Regions can nest and are wider than scopes
+
+{@ocaml[
+let f () =
+  let foo =
+    let local_ bar = ("region", "scope") in
+    bar in
+  fst foo;;
+]}
+
+{1 What does [local] mean?}
+
+- The value does not escape its region
+  * Neither function result nor exception payload
+  * Not captured in closure, not referred from mutable area
+  * Not reachable from a heap allocated value
+  * Freed at its region's end, without triggering the GC
+- In function types &mdash; **This is the most important**
+  * Contract between caller and callee
+  * `local` means in the caller's region
+  * Parameter: callee respects caller's locality
+  * Result: callee stores in caller's region
+  * This really defines 4 arrows
+    {@ocaml[
+    val global_global : s -> t * t                (* Legacy *)
+    val local_global : local_ s -> t * t
+    val global_local : s -> local_ t * t
+    val local_local : local_ s -> local_ t * t
+    ]}
+
+{1 What is `local` for?}
+
+0. Low-latency code
+   More importantly, stack allocations will never trigger a GC, and so they're safe to use in low-latency code that must currently be zero-alloc
+1. Functions passed to higher-order iterators (such as `map`, `fold`, `bind` and others) are allocated on the stack
+2. Safer callbacks
+
+{1 Hands-on}
+
+{@ocamltop[
+# let monday () = let str = "mon" ^ "day" in str;;
+]}
+
+{@ocamltop[
+# let bye () = let ciao = "sorry" in failwith ciao;;
+]}
+
+{@ocamltop[
+# let make_counter () =
+    let counter = ref (-1) in
+    fun () -> incr counter; !counter;;
+]}
+
+{@ocamltop[
+# let state = ref ""
+# let set () = state := "disco";;
+]}
+
+{@ocamltop[
+# let rec map f = function [] -> [] | x :: u -> f x :: map f u;;
+]}
+
+{@ocamltop[
+# let f1 (local_ u : int list) = [1; 2; 3];;
+]}
+
+{@ocamltop[
+# let f2 (local_ u : int list) = u;;
+]}
+
+{@ocamltop[
+# let f3 (local_ u : int list) = 42 :: u;;
+]}
+
