@@ -1,0 +1,114 @@
+{0 AI for Climate & Nature Community Day}
+
+@published 2025-05-01
+
+{%html:
+<figure>
+        <img src="melissa.jpg" alt="Melissa Leach" style="width:80%">
+        <figcaption>Melissa Leach introducing the day</figcaption>
+</figure>
+%}
+Today was the "AI for Climate & Nature Community Day" at the {{:https://map.cam.ac.uk/?maplon=0.12032&maplat=52.20354&mapzoom=18&maplayers=Building+Labels%2CExternal+Sites%2CColleges%2CUniversity+Sites%2CBuildings%2CTransport&mapfeature=mfid257%2CBuildings}David Attenborough Building}. A whole bunch of the EEG were either presenting or contributing in some way so I thought I'd come along
+to see what's going on.
+
+
+{1 Keynote and main talks}
+
+Following the intro talks from Professors {{:https://www.cambridgeconservation.org/about/people/prof-melissa-leach/}Melissa Leach} and {{:https://www.zoo.cam.ac.uk/directory/bill-sutherland}Bill Sutherland}, the day started with the keynote talk from {{:https://www.biology.ox.ac.uk/people/amy-hinsley}Amy Hinsley}, who, using the specific case of animial trafficking, talked about the need to make AI in conservation equitable, explainable and useful.
+
+{%html:
+<figure>
+        <img src="amy.jpg" alt="Amy Hinsley" style="width:80%">
+        <figcaption>Amy Hinsley delivering the keynote talk</figcaption>
+</figure>
+%}
+
+We then moved into the first session with {{:https://www.geog.cam.ac.uk/people/lines/}Emily Lines} from the Geography Department who talked about the challenges processing sensor data in the context of forests. Her group has a variety of data collected from forests across Europe, collected from using many different methods, from drones taking pictures of the canopies to ground-based laser scanners producing 3d point clouds. The challenge is then not only to identify individual trees, which is pretty tricky, but also to then distinguish between the leaves of the trees and the wood.
+
+After Emily came {{:https://ai.cam.ac.uk/people/robert-rouse.html}Robert Rouse} from the {{:https://iccs.cam.ac.uk}ICCS}, who's using a small neural net and genetic algorithms to extend a study from
+the RSPB on figuring out an optimal way to do some land use adjustments to cut carbon and improve outcomes for birds, whilst not significantly impacting the ability to produce food. 
+
+We then had {{:https://www.zoo.cam.ac.uk/directory/dr-sam-reynolds}Sam Reynolds} and {{:https://toao.com}Sadiq Jaffer} who talked about their project; using AI to sift through millions of papers looking for those relevant to a specified conservation topic. They're able to directly compare their results with results obtained by manually doing this process, a project that's been going on over the last 20 or so years summing to something like 75 man years of effort. In the end they only missed a few papers that the manual process had found, but actually found many relevant papers that had been missed - and all in only a few days of compute.
+
+{%html:
+<figure>
+        <img src="sadiq.jpg" alt="Sam Reynolds and Sadiq Jaffer" style="width:80%">
+        <figcaption>Sam Reynolds and Sadiq Jaffer sorting millions of papers</figcaption>
+</figure>
+%}
+
+{1 Lightning talks}
+We then had a number of 'lightning talks', with each presenter having only three minutes to talk about their work.
+
+- {{:https://www.maths.cam.ac.uk/person/ss3299}Sebastian Schemm} presented his work on creating a foundational model for the climate
+- {{:https://www.eng.cam.ac.uk/profiles/ac685}Alice Cicirello} talked about the prospects of applying machine learning to {{:https://en.wikipedia.org/wiki/Marine_cloud_brightening}Marine Cloud Brightening}
+- {{:https://www.maths.cam.ac.uk/person/sdat2}Simon Thomas} has been looking at analysing the heights of tropical cyclone storm surges
+- {{:https://github.com/niccolozanotti}Niccolò Zanotti} gave us an introduction to {{:https://github.com/cambridge-ICCS/FTorch}FTorch}, a library to integrate the worlds of PyTorch and Fortran
+- {{:https://www.nceo.ac.uk/contact-us/people/dr-simon-driscoll/}Simon Driscoll} then talked about melt ponds on arctic sea ice, a poorly understood but important component of the climate in the Arctic.
+- {{:https://www.zoo.cam.ac.uk/directory/emilio-luz-ricca}Emilio Luz-Ricca} talked about his project to apply machine learning to predict hunting pressure
+- {{:https://orlando-code.github.io}Orlando Timmerman} gave us some insights into how he's been using machine learning to predict the future of coral reefs, and how we might use this to help with their conservation.
+- {{:https://www.zoo.cam.ac.uk/directory/ruari-marshall-hawkes}Ruari Marshall-Hawkes} showed us how to listen very carefully to figure out population numbers,
+- {{:https://www.linkedin.com/in/harriet-branson-a93a8313b/}Hattie Branson} from {{:https://www.fauna-flora.org}Fauna & Flora} talked about habitat detection in South Sudan,
+- {{:https://www.linkedin.com/in/martakoch/}Marta Koch} showed us an analysis of how well ChatGPT, Claude and the like would perform at setting the agendas for SDPs,
+- {{:https://www.linkedin.com/in/zhengpeng-feng-2410a132a/}Frank Feng} finished the session with a talk on the {{:https://www.cst.cam.ac.uk/seminars/list/227335}Barlow Twins Earth Foundation Model}.
+
+{%html:
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+<figure style="margin:0; width: 100%;">
+        <img src="sebastian.jpg" alt="Sebastian Schemm" style="max-width: 100%; height: auto;">
+        <figcaption>Sebastian Schemm</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="alice.jpg" alt="Alice Cicirello" style="max-width: 100%; height: auto;">
+        <figcaption>Alice Cicirello</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="simon.jpg" alt="Simon Thomas" style="max-width: 100%; height: auto;">
+        <figcaption>Simon Thomas</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="niccolò.jpg" alt="Niccolò Zanotti" style="max-width: 100%; height: auto;">
+        <figcaption>Niccolò Zanotti</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="simond.jpg" alt="Simon Driscoll" style="max-width: 100%; height: auto;">
+        <figcaption>Simon Driscoll</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="emilio.jpg" alt="Emilio Luz-Ricca" style="max-width: 100%; height: auto;">
+        <figcaption>Emilio Luz-Ricca</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="orlando.jpg" alt="Orlando Timmerman" style="max-width: 100%; height: auto;">
+        <figcaption>Orlando Timmerman</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="ruari.jpg" alt="Ruari Marshall-Hawkes" style="max-width: 100%; height: auto;">
+        <figcaption>Ruari Marshall-Hawkes</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="hattie.jpg" alt="Hattie Branson" style="max-width: 100%; height: auto;">
+        <figcaption>Hattie Branson</figcaption>
+</figure>
+<figure style="margin:0; width: 100%;">
+        <img src="frank.jpg" alt="Frank Feng" style="max-width: 100%; height: auto;">
+        <figcaption>Frank Feng</figcaption>
+</figure>
+
+</div>
+%}
+
+{1 Discussions}
+We then split up into three discussion groups; one on the future of this work, one on how to continue building this community of researchers, and the last on applying AI to real-world problems. As a newcomer to the field I was interested in the direction it's
+heading in, so I joined in {{:https://dorchard.github.io}Dominic Orchard}'s led session on the future of AI.
+
+We had a fascinating discussion on both the
+immediate things we can do and longer term worries. We were imagining a world where AI becomes 'just a tool' that we don't need to be experts in to apply it, but right now we're in a much more tightly coupled collaborative world where we need experts in AI to
+complement the experts in the application field to make progress. This comes with challenges - applying for funding for multidisciplinary work is not the norm, so we spent some time discussing this too.
+
+One of our group spoke about statistics now being 'just a tool', but it's been one that we've worked with for a long time now and
+we know where the sharp corners are. We have protocols for applying statistical tools and we have diagnostic plots to tell us whether the results are trustworthy, but not only do we not have these for AI models, but it's not yet clear whether such a thing will be even possible.
+
+Overall it was a fascinating day, and I'm very much looking forward to following the work of these outstanding researchers, and maybe even contributing to their work in some way in the future.
+
+{i Thanks to {{:https://anil.recoil.org}Anil Madhavapeddy} for the photos of the day.}
