@@ -13,7 +13,7 @@ Time for a little summary of things then!
 
 I've been working with {{:https://tunbury.org/}Mark Elvers} on getting the docs
 CI running using Odoc 3.0. There are quite a few changes involved, both in how
-we're {{!/site/blog/2025/04/page-"ocaml0-docs-ci-and-odoc-3"}building the packages}
+we're {{!/site/blog/2025/04/page-"ocaml-docs-ci-and-odoc-3"}building the packages}
 but also how we're running odoc - it's building using [odoc_driver] rather than [voodoo] now,
 and while it's looking promising now we had hit a few hurdles along the way.
 
