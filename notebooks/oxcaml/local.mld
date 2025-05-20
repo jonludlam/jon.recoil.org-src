@@ -1,6 +1,7 @@
 {0 Locality Mode OxCaml}
 
 @switch oxcaml
+@libs base
 
 {@ocaml[
 let f () =
@@ -38,7 +39,7 @@ Other keywords to spot: [stack_], [global_], [@ global], [exclave_] and [[@local
 | Mode | Lifetime | Allocation |
 |----------------|-----------------|-----------------|
 | [global] or missing | MAY outlive its region | MUST be on the heap |
-| [local] | MUST NOT outlive its region | MAY be on the stack |
+| [local] | MUST NOT outlive its region | MAY be on the stack |}
 
 - Region: compile-time representation of a stack frame
   + Function bodies
@@ -59,16 +60,16 @@ let f () =
 {1 What does [local] mean?}
 
 - The value does not escape its region
-  * Neither function result nor exception payload
-  * Not captured in closure, not referred from mutable area
-  * Not reachable from a heap allocated value
-  * Freed at its region's end, without triggering the GC
-- In function types &mdash; **This is the most important**
-  * Contract between caller and callee
-  * `local` means in the caller's region
-  * Parameter: callee respects caller's locality
-  * Result: callee stores in caller's region
-  * This really defines 4 arrows
+  + Neither function result nor exception payload
+  + Not captured in closure, not referred from mutable area
+  + Not reachable from a heap allocated value
+  + Freed at its region's end, without triggering the GC
+- In function types -; {b This is the most important}
+  + Contract between caller and callee
+  + [local] means in the caller's region
+  + Parameter: callee respects caller's locality
+  + Result: callee stores in caller's region
+  + This really defines 4 arrows
     {@ocaml[
     val global_global : s -> t * t                (* Legacy *)
     val local_global : local_ s -> t * t
@@ -100,7 +101,7 @@ let f () =
 ]}
 
 {@ocamltop[
-# let state = ref ""
+# let state = ref "";;
 # let set () = state := "disco";;
 ]}
 

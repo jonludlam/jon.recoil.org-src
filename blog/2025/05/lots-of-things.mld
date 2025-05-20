@@ -11,10 +11,10 @@ Time for a little summary of things then!
 
 {1 Ocaml-docs-ci}
 
-I've been working with {{"https://tunbury.org/}Mark Elvers} on getting the docs
+I've been working with {{:https://tunbury.org/}Mark Elvers} on getting the docs
 CI running using Odoc 3.0. There are quite a few changes involved, both in how
-we're {{!/site/blog/2025/04/page-"ocaml0-docs-ci-and-odoc-3"}OCaml-Docs-CI and Odoc 3}building the packages}
-but also how we're running odoc - it's building using `odoc_driver` rather than `voodoo` now,
+we're {{!/site/blog/2025/04/page-"ocaml0-docs-ci-and-odoc-3"}building the packages}
+but also how we're running odoc - it's building using [odoc_driver] rather than [voodoo] now,
 and while it's looking promising now we had hit a few hurdles along the way.
 
 We set the CI going last weekend but discovered that it was having some issues building
@@ -73,22 +73,16 @@ v}
 I tell Merlin that the contents are:
 
 {v
-# let x = 1 + 2;;
-  - val x : int = 3
-# let y = x + 1;;
-  - val y : int = 4
-v}
-
-I tell Merlin that the contents are:
-
-{v
   let x = 1 + 2;;
 
   let y = x + 1;;
-
+               
 v}
 
-where I'm careful to maintain the position of the original code. This bit is working quite nicely!
+where I'm careful to maintain the position of the original code. This bit is working quite nicely, but only
+when the code is syntactically correct, as I'm using the standard toplevel parser to figure out where the
+expression ends. I think I'm going to end up needing to write a custom parser for this, so something that
+will end on a [;;] but ignore them in string constants, comments and so on.
 
 The approach I've taken for the second problem is to treat each cell as a separate module. I then write out
 a [cmi] file into the virtual filesystem as [cell__id_0.cmi] and [open] all the previous
@@ -121,7 +115,7 @@ I've therefore decided that I would bring forward a feature that I'd had in mind
 that we could have different "backends" for the notebooks. So I'd still build the frontend using
 "normal" OCaml, but the web-worker serving as the toplevel would be an oxcaml one. 
 
-After a bit of head-scratching, it turned out that the interface between the worker and the main
+Of course, it didn't work first time! After a bit of head-scratching, it turned out that the interface between the worker and the main
 thread, although I'd {i almost} got it ocaml-agnostic, wasn't quite right. The way it works is
 that it uses the jsonrpc protocol to communicate, and while it had marshalled the requests into
 a string, it hadn't turned that final OCaml string into a Javascript string, so it was sending the
@@ -130,7 +124,10 @@ workers were built with different compilers, this ended up just failing with an 
 took a good deal of time to track down. Once that was fixed, it was just a case of making sure I
 could have 2 independent 'switches' on my site - one for oxcaml and one for standard OCaml.
 
-The upshot of all this is that I now have a working version of the notebooks using oxcaml, and
+The upshot of all this is that I now have a semi-working version of the notebooks using oxcaml. As
+an initial demonstration I ported one of my colleague {{:https://github.com/cuihtlauac}Cuihtlauac}'s
+oxcaml tutorial docs to the notebook format, and it {{!/site/notebooks/oxcaml/page-"local"}works quite nicely}.
+
 
 
 
