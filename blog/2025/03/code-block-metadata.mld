@@ -2,7 +2,7 @@
 
 @published 2025-03-07
 
-Back in 2021 {{:https://github.com/julow}@julow} introduced some {{:https://github.com/ocaml-doc/odoc-parser/pull/2}new syntax} to odoc’s code blocks to allow us to attach arbitrary metadata to the blocks. We imposed no structure on this; it was simply a block of text in between the language tag and the start of the code block. Now odoc needs to use it itself, we need to be a bit more precise about how it’s defined.
+Back in 2021 {{:https://github.com/julow}julow} introduced some {{:https://github.com/ocaml-doc/odoc-parser/pull/2}new syntax} to odoc’s code blocks to allow us to attach arbitrary metadata to the blocks. We imposed no structure on this; it was simply a block of text in between the language tag and the start of the code block. Now odoc needs to use it itself, we need to be a bit more precise about how it’s defined.
 
 The original concept looked like this:
 
@@ -26,4 +26,4 @@ v}
 
 Daniel suggested a very minimal escaping rule, whereby a string could contain a literal " by prefixing with a backslash - something like; "value with a \" and spaces", but we discussed it during the {{:https://ocaml.org/governance/platform}odoc developer meeting} and felt that we might want something a little more familiar. So we took a look at the lexer in {{:https://github.com/janestreet/sexplib/blob/master/src/lexer.mll}sexplib} and found that it follows the {{:https://github.com/janestreet/sexplib/blob/d7c5e3adc16fcf0435220c3cd44bb695775020c1/README.org#lexical-conventions-of-s-expression}lexical conventions} of OCaml’s strings, and decided that would be a reasonable approach for us to follow too.
 
-The resulting code, including the extraction logic, was implemented in {{:https://github.com/ocaml/odoc/pull/1326/}PR 1326} mainly by {{:https://github.com/panglesd}@panglesd} with a little help from me on the lexer.
+The resulting code, including the extraction logic, was implemented in {{:https://github.com/ocaml/odoc/pull/1326/}PR 1326} mainly by {{:https://github.com/panglesd}panglesd} with a little help from me on the lexer.

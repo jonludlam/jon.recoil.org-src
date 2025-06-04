@@ -1,5 +1,10 @@
 # A Guided Tour
 
+<ul class="at-tags"><li class="libs"><span class="at-tag">libs</span> <p>base</p></li></ul>
+
+**Note** This is based on material from https://realworldocaml.org/, by
+Anil Madhavapeddy and Yaron Minsky.
+
 This chapter gives an overview of OCaml by walking through a series of small
 examples that cover most of the major features of the language. This should
 provide a sense of what OCaml can do, without getting too deep into any one

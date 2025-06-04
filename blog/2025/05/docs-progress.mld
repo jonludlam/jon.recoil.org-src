@@ -1,5 +1,7 @@
 {0 Progress in OCaml docs}
 
+@published 2025-05-29
+
 The docs build is progress well, and we've {i just about} hit 20,000 packages (20,038 to be precise).
 So at this point I thought it'd be useful to take a look through the various failures to see if there are
 any insights to be gained. 

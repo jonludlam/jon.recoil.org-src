@@ -1,11 +1,12 @@
 FROM ocaml/opam:ubuntu-24.04-ocaml-5.2
 RUN sudo apt install -y build-essential autoconf
-RUN opam switch create oxcaml 5.2.0+flambda2 --repos with-extensions=git+https://github.com/jonludlam/opam-repository-js.git#with-extensions-jsoo-and-rename,default
-RUN echo hi4
+RUN opam switch create oxcaml 5.2.0+flambda2 --repos with-extensions=git+https://github.com/jonludlam/opam-repository-js.git#with-extensions-jsoo-and-rename-new,default
+RUN echo hi5
 RUN opam pin add -n git+https://github.com/jonludlam/js_top_worker#oxcaml
 RUN opam pin add -n git+https://github.com/jonludlam/mime_printer#odoc_notebook
 RUN opam install mime_printer js_top_worker js_top_worker-web core astring
 RUN opam switch create 5.2.0
+RUN opam pin add -n git+https://github.com/jonludlam/js_of_ocaml#fs_fake_fix
 RUN opam pin add -n git+https://github.com/jonludlam/js_top_worker#learno
 RUN opam pin add -n git+https://github.com/jonludlam/mime_printer#odoc_notebook
 RUN opam pin add -n git+https://github.com/jonludlam/mdx#learno
