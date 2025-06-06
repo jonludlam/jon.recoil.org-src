@@ -15,7 +15,7 @@ RUN opam pin add -n git+https://github.com/jonludlam/jsoo-code-mirror#rework-int
 RUN echo boo
 RUN opam pin add -n git+https://github.com/jonludlam/odoc#learno
 RUN opam pin add -n git+https://github.com/jonludlam/odoc_notebook
-RUN opam install core base bos odoc_notebook odoc-driver patience_diff astring brr note
+RUN opam install core base bos odoc_notebook odoc-driver patience_diff astring brr note js_top_worker-bin
 RUN opam update; opam upgrade -y
 RUN opam update --switch oxcaml; opam upgrade -y --switch oxcaml
 RUN sudo mkdir -p /build/_tmp/_odoc /build/_tmp/html/assets
@@ -26,8 +26,8 @@ RUN echo foooo
 RUN opam update
 RUN opam upgrade -y
 RUN opam update --switch oxcaml; opam upgrade -y --switch oxcaml
-RUN opam exec -- odoc_notebook opam core patience_diff astring brr note mime_printer --output _tmp/html
-RUN opam exec -- odoc_notebook opam --switch oxcaml --output _tmp/html core mime_printer astring 
+RUN opam exec -- jtw opam core patience_diff astring brr note mime_printer --output _tmp/html/_opam
+RUN opam exec -- jtw opam --switch oxcaml --output _tmp/html/oxcaml core mime_printer astring 
 COPY blog /build/blog
 COPY notebooks /build/notebooks
 COPY scripts /build/scripts
