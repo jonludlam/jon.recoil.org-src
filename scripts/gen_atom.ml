@@ -90,6 +90,7 @@ let entry_of_mld odoc_file =
     ~published:(Option.get published) ~updated:(Option.get published)
     ~summary:(Syndic.Atom.Text "Summary")
     ~content:(Syndic.Atom.Html (None, content))
+    ~links:[ Syndic.Atom.link ~rel:Syndic.Atom.Self (Uri.of_string url) ]
     ~authors:(author, []) ()
 
 let entries =
