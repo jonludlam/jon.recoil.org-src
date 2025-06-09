@@ -1,5 +1,9 @@
 {0 Week 23}
 
+@libs opam-format fpath rresult bos
+@merlinonly
+@published 2025-06-09
+
 Some brief notes on last week.
 
 {1 Docs CI and Sherlodoc}

@@ -71,7 +71,7 @@ let entry_of_mld odoc_file =
         let html = Odoc_html.Generator.items ~config ~resolve preamble in
         let content_fmt = Fmt.list (Tyxml.Html.pp_elt ()) in
         let content = Format.asprintf "%a" content_fmt html in
-        let title = Printf.sprintf "<a href=\"%s\">%s</a>" url (String.concat "" title) in
+        let title = String.concat "" title in
         let content =
           Printf.sprintf "%s<p>Continue reading <a href=\"%s\">here</a></p>" content url in
         (title, content, url)
