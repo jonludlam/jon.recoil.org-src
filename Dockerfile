@@ -5,6 +5,7 @@ RUN echo hi6
 RUN opam pin add -n git+https://github.com/jonludlam/js_top_worker#oxcaml
 RUN opam pin add -n git+https://github.com/jonludlam/mime_printer#odoc_notebook
 RUN opam install mime_printer js_top_worker js_top_worker-web core astring
+RUN opam install parallel
 RUN opam switch create 5.2.0
 RUN opam update
 RUN opam pin add -n git+https://github.com/jonludlam/js_of_ocaml#fs_fake_fix
@@ -17,19 +18,19 @@ RUN echo boo
 RUN opam pin add -n git+https://github.com/jonludlam/odoc#learno
 RUN opam pin add -n git+https://github.com/jonludlam/odoc_notebook
 RUN opam install core base bos odoc_notebook odoc-driver patience_diff astring brr note js_top_worker-bin rresult opam-format
-RUN echo hi
+RUN echo hi8
 RUN opam update; opam upgrade -y
 RUN opam update --switch oxcaml; opam upgrade -y --switch oxcaml
 RUN sudo mkdir -p /build/_tmp/_odoc /build/_tmp/html/assets
 RUN sudo chown opam:opam -R /build
 RUN cd /build && opam exec -- odoc_driver --odoc-dir _tmp/_odoc --odocl-dir _tmp/_odoc --html-dir _tmp/html --packages-dir reference --lib-map _tmp/_odoc/lib_map.json
 WORKDIR /build
-RUN echo foooo
+RUN echo fooooopp
 RUN opam update
 RUN opam upgrade -y
 RUN opam update --switch oxcaml; opam upgrade -y --switch oxcaml
 RUN opam exec -- jtw opam core patience_diff astring brr note mime_printer fpath rresult opam-format bos --output _tmp/html/_opam
-RUN opam exec -- jtw opam --switch oxcaml --output _tmp/html/oxcaml core mime_printer astring 
+RUN opam exec -- jtw opam --switch oxcaml --output _tmp/html/oxcaml core mime_printer astring parallel
 COPY blog /build/blog
 COPY notebooks /build/notebooks
 COPY scripts /build/scripts

@@ -1,7 +1,9 @@
 # Simple Parallelism Without Data Races
 
+**Note: The text here comes from [Luke Maurer's PR](https://https://github.com/oxcaml/oxcaml/pull/3886)**
+
 <ul class="at-tags"><li class="merlinonly"><span class="at-tag">merlinonly</span></li></ul>
-<ul class="at-tags"><li class="libs"><span class="at-tag">libs</span> <p>base parallel</p></li></ul>
+<ul class="at-tags"><li class="libs"><span class="at-tag">libs</span> <p>base parallel parallel.scheduler.work_stealing</p></li></ul>
 <ul class="at-tags"><li class="switch"><span class="at-tag">switch</span> <p>oxcaml</p></li></ul>
 
 # Introduction
@@ -82,6 +84,11 @@ let fun2 () =
 
 ## Why are data races bad?
 
+```ocaml hidden
+let calculate_price_of_gold () = ();;
+let really_good_price_for_gold = 10.0;;
+let buy_lots_of_gold () = ();;
+```
 Every race condition is a bug, but data races are especially insidious.
 Obviously, the outcome is unpredictable, since we don't know which side will
 “win the race,” but the problems don't end there. Both the compiler and the CPU
@@ -211,20 +218,17 @@ which implements the popular [work-stealing] strategy.
 [work-stealing]: https://en.wikipedia.org/wiki/Work_stealing
 
 ```ocaml
-let test_add4 par = add4 par 1 10 100 1000
-
-let () =
-  let module Scheduler = Parallel_scheduler_work_stealing in
-  let scheduler = Scheduler.create () in
-  let monitor = Parallel.Monitor.create_root () in
-  let result = Scheduler.schedule scheduler ~monitor ~f:test_add4 in
-  Scheduler.stop scheduler;
-  Printf.printf "result: %d\n" result
-;;
-```
-
-```
+# let test_add4 par = add4 par 1 10 100 1000
+# let () =
+    let module Scheduler = Parallel_scheduler_work_stealing in
+    let scheduler = Scheduler.create () in
+    let monitor = Parallel.Monitor.create_root () in
+    let result = Scheduler.schedule scheduler ~monitor ~f:test_add4 in
+    Scheduler.stop scheduler;
+    Printf.printf "result: %d\n" result;;
 result: 1111
+- : unit = ()
+
 ```
 
 This creates a work-stealing scheduler, along with a _monitor_ to manage
@@ -338,22 +342,43 @@ let test_tree =
 ```
 
 So far, so good. But something annoying happens if we introduce an abstraction
-barrier. Let's move `Thing` into its own file. `thing.mli` is very simple:
+barrier. Let's introduce a signature for [Thing].
 
 ```ocaml
-type t
+module type THING = sig
+  type t
 
-module Mood : sig
+  module Mood : sig
+    type t =
+      | Happy
+      | Neutral
+      | Sad
+  end
+
+  val create : price:float -> mood:Mood.t -> t
+  val price : t -> float
+  val mood : t -> Mood.t
+  val cheer_up : t -> unit
+end
+module Thing : THING = struct
+  module Mood = struct
+    type t =
+      | Happy
+      | Neutral
+      | Sad
+  end
+
   type t =
-    | Happy
-    | Neutral
-    | Sad
+    { price : float
+    ; mutable mood : Mood.t
+    }
+
+  let create ~price ~mood = { price; mood }
+  let price { price; _ } = price
+  let mood { mood; _ } = mood
+  let cheer_up t = t.mood <- Happy
 end
 
-val create : price:float -> mood:Mood.t -> t
-val price : t -> float
-val mood : t -> Mood.t
-val cheer_up : t -> unit
 ```
 
 But now we get an error from the compiler:

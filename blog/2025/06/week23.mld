@@ -86,7 +86,7 @@ with a version of odoc that {e doesn't} expose the libraries, we might have to h
 that in order to use those odocl files. Obviously the longer term solution is just to make
 a new release of odoc with this change and update the docs CI to use that.
 
-{2 Package to Library map}
+{1 Package to Library map}
 
 A related quest was to assemble a map of opam package to ocamlfind library names. It's
 a quirk of history that the library names that an opam package provides are not necessarily
@@ -122,7 +122,7 @@ though, is named [com.cma], so it looks like [odoc_driver] has a bug. Interestin
 running [odoc_driver] locally gets the library name correct, so it's only an issue when
 running it in the docs CI. {{:https://github.com/ocaml/odoc/issues/1351}Issue filed}.
 
-{2 Further claude code experiments}
+{1 Further claude code experiments}
 
 To see how well Claude Code could handle more complex tasks, I thought I'd give it a whirl
 on something more like its home territory, and somewhere where I was less familiar.
@@ -135,7 +135,7 @@ make sure it works as I want and only then convert it to OCaml. This worked pret
 and I've now got a neat {{:https://jon.ludl.am/experiments/notebook-editor/notebook-editable.html}demonstration editor}
 that I can use to guide the OCaml implementation.
 
-{2 More notebook work}
+{1 More notebook work}
 The oxcaml project will be launching this week hopefully. I've been looking at Luke's
 {{:https://github.com/ocaml-flambda/flambda-backend/pull/3886}Parallelism tutorial}
 and have been thinking about how this will work with the online notebooks. The parallel
@@ -150,7 +150,7 @@ so we need to do something a bit more sophisticated than just 'not call exec', s
 did some work to have a mode of worker that doesn't load the cmas, just the cmis for
 Merlin. This is almost there.
 
-{2 Odoc work}
+{1 Odoc work}
 Ocaml 5.4 is just around the corner, and there's some odoc work to be done before the
 release. One of the main new features that will impact odoc is the new {{:https://tyconmismatch.com/papers/ml2024_labeled_tuples.pdf}labelled tuples}
 feature. Fortunately {{:https://github.com/lukemaurer}Luke Maurer} has already done a lot of work to plumb this into
