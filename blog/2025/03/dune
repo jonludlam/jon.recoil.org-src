@@ -1,7 +1,7 @@
 (rule
  (with-stdout-to
   module-type-of.mld.out
-  (run odoc_notebook test %{dep:module-type-of.mld})))
+  (run odoc_notebook_test %{dep:module-type-of.mld})))
 
 (rule
  (alias runtest)
