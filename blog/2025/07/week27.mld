@@ -1,14 +1,16 @@
 {0 Weeks 24-27}
 
+@published 2025-07-07
+
 It's been a busy few weeks. There's been exam marking for the 1A Foundations of Computer
 Science course, an Odoc release to plan, and some really interesting new work on using
 LLMs to summarise OCaml documentation. This post is about anaspect of that last one that
 I found particularly interesting.
 
 {1 odoc-llm}
-Sadiq and I have been looking at using LLMs to summarise the documentation produced by Odoc.
+Sadiq and I have been {{:https://toao.com/blog/ocaml-local-code-models}looking at using LLMs} to summarise the documentation produced by Odoc.
 The idea is to get a concise summary of the purpose of each module, so that we can quickly identify
-which modules are relevant to a particular task. It's been interesting to see the ways in which it goes wrong!
+which modules are relevant to a particular task.
 
 For testing this, we need to see how it works on different types of libraries. The first axis
 I wanted to test on goes between 'well documented' and 'poorly documented', and so I need at
@@ -37,7 +39,7 @@ modules.
 
 One of the early prompts for the module [Cmdliner.Term.Syntax] looked roughly as follows:
 
-{[
+{v
 You are an expert OCaml developer. Write a 2-3 sentence description focusing on:
 - The specific operations and functions this module provides
 - What data types or structures it works with
@@ -57,15 +59,15 @@ Module Documentation: let operators.
 - val (and+) : 'a t ->
   'b t ->
   ('a * 'b) t (* ( and* ) is product. *)
-]}
+v}
 
 and the output using a small model (qwen3-30b-a3b) was:
 
-{[
+{v
 "The module provides (let+) for applying functions to values within a context and (and+) for combining two contexts into a product. It operates on applicative
 structures like option, list, or custom types that support these operations. For example, it enables sequential transformation of values in a context or
 pairing elements from two separate contexts."
-]}
+v}
 
 There are quite a few issues with the input here. Firstly, we've only given the
 module name, not the full path. Secondly, there's nothing to let the model know
@@ -74,7 +76,7 @@ no idea about the context in which this module was found, so it has no idea
 that it's part of a command-line processing library. By fixing these issues, we
 end up with the prompt:
 
-{[
+{v
 You are an expert OCaml developer. Write a 2-3 sentence description focusing on:
 - The specific operations and functions this module provides
 - What data types or structures it works with
@@ -100,15 +102,15 @@ Module Documentation: let operators.
 - val (and+) : 'a Cmdliner.Term.t ->
   'b Cmdliner.Term.t ->
   ('a * 'b) Cmdliner.Term.t (* ( and* ) is product. *)
-]}
+v}
 
 The output of this improved prompt is much better:
 
-{[
+{v
 The module provides operators to map and combine terms, which represent command line argument parsers and their results. `let+` transforms a parsed argument
 into a new value, while `and+` merges two independent arguments into a tuple. These enable building structured command line interfaces, such as parsing a
 filename and a flag simultaneously, then combining them into a configuration record.
-]}
+v}
 
 It still occasionally incorrectly decides that this module provides monadic combinators
 rather than applicative, but this is where we get better results from using a larger model.

@@ -1,13 +1,16 @@
 FROM ocaml/opam:ubuntu-24.04-ocaml-5.2
 RUN sudo apt install -y build-essential autoconf
-RUN opam switch create oxcaml 5.2.0+flambda2 --repos with-extensions=git+https://github.com/jonludlam/opam-repository-js.git#with-extensions-jsoo-and-rename-new,default
+RUN opam switch create oxcaml 5.2.0+ox --repos with-extensions=git+https://github.com/oxcaml/opam-repository.git,default
+RUN sudo ln -f /usr/bin/opam-2.3 /usr/bin/opam && opam init --reinit -ni
 RUN echo hi6
+RUN opam pin add --with-version 6.0.1+ox -n git+https://github.com/jonludlam/js_of_ocaml#oxcaml
 RUN opam pin add -n git+https://github.com/jonludlam/js_top_worker#oxcaml
 RUN opam pin add -n git+https://github.com/jonludlam/mime_printer#odoc_notebook
 RUN opam install mime_printer js_top_worker js_top_worker-web core astring
 RUN opam install parallel
 RUN opam switch create 5.2.0
 RUN opam update
+RUN echo foo
 RUN opam pin add -n git+https://github.com/jonludlam/js_of_ocaml#fs_fake_fix
 RUN opam pin add -n git+https://github.com/jonludlam/js_top_worker#learno
 RUN opam pin add -n git+https://github.com/jonludlam/mime_printer#odoc_notebook
@@ -17,6 +20,7 @@ RUN opam pin add -n git+https://github.com/jonludlam/jsoo-code-mirror#rework-int
 RUN echo boo
 RUN opam pin add -n git+https://github.com/jonludlam/odoc#learno
 RUN opam pin add -n git+https://github.com/jonludlam/odoc_notebook
+RUN opam update
 RUN opam install core base bos odoc_notebook odoc-driver patience_diff astring brr note js_top_worker-bin rresult opam-format
 RUN echo hi8
 RUN opam update; opam upgrade -y
@@ -25,7 +29,7 @@ RUN sudo mkdir -p /build/_tmp/_odoc /build/_tmp/html/assets
 RUN sudo chown opam:opam -R /build
 RUN cd /build && opam exec -- odoc_driver --odoc-dir _tmp/_odoc --odocl-dir _tmp/_odoc --html-dir _tmp/html --packages-dir reference --lib-map _tmp/_odoc/lib_map.json
 WORKDIR /build
-RUN echo fooooopp
+RUN echo foooooppppp
 RUN opam update
 RUN opam upgrade -y
 RUN opam update --switch oxcaml; opam upgrade -y --switch oxcaml
