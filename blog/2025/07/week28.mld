@@ -1,6 +1,7 @@
 {0 Weeks 28}
 
 @published 2025-07-14
+@libs caqti.platform mariadb
 
 {1 OCaml MCP server}
 Last week I got the summarisation to the point where it felt useful to run it across all the modules in opam.
