@@ -1,7 +1,8 @@
 {0 July}
 
-@children_order week27 week28
+@children_order week27 week28 odoc-3-live-on-ocaml-org retrospective
 
+- {{!/site/blog/2025/07/page-"retrospective"}Retrospective}
 - {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}Odoc 3 is live on OCaml.org!}
 - {{!/site/blog/2025/07/page-week27}Weeks 24-27}
 - {{!/site/blog/2025/07/page-week28}Week 28}
