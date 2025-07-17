@@ -112,6 +112,11 @@ to take this work.
 An area where I've really made a shockingly small amount of progress is to write up all the
 work that's gone into Odoc over the past 6 (!!!) years.
 
+{2 Odoc notebooks}
+This needs to be tidied up and a v0.1 released. In particular, the work on js_top_worker 
+might well be shared with Arthur's {{:https://github.com/art-w/x-ocaml}x-ocaml} for a unified
+toplevel experience.
+
 {2 AI work}
 I'd like to carry on the work I've started with Sadiq on the interaction of LLMs with OCaml.
 Getting the package search to work sensibly for an MCP server is first on the list, but also
@@ -128,6 +133,19 @@ Work needs to be done on the dune rules for odoc, which currently only support t
 in odoc 2.x. Paul-Elliot has {{:https://github.com/ocaml/dune/pull/11716}done some work on this},
 but much more needs to be done.
 
+{2 Further general odoc work}
+- Better source rendering
+- Syntax for linking to source
+- Custom tags (used in odoc_notebook)
+- Web-native rendering, for embedding odoc in a website
+- Unifying paths and cpaths (https://github.com/jonludlam/odoc/tree/parameterised-paths)
+
+{1 What to {i actually} do?}
+
+There are a lot of things in the above list. I'm not sure yet how I manage to figure out
+what I actually end up doing, and how that helps me to help Tarides, to fit in as a
+useful member of the EEG group, and to make sure I'm doing what's right for my own
+future.
 
 
 
