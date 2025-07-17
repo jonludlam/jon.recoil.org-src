@@ -1,0 +1,143 @@
+{0 4 months in, a retrospective}
+
+It's been four months since starting back at the university, and time to do a bit of
+a retrospective and forward-looking plan for the next 3-4 months.
+
+{1 What's happened?}
+It's been a bit of a daunting experience, landing in a team that are already working
+one hundred miles an hour on things well out of my comfort zone. I've been going to
+group meetings and having lots of interesting conversations, but I've found it
+difficult to make the next steps happen. One area where I've had some success is in
+working with Sadiq on LLMs - in particular, getting local LLMs to solve programming
+exercises that we both {{:https://toao.com/blog/ocaml-local-code-models}wrote}
+{{!/site/blog/2025/05/page-"ticks-solved-by-ai"}up}. I've also been working with him
+on taking the output from the docs CI and {{:https://github.com/sadiqj/odoc-llm}summarising it with LLMs} in order to
+create an MCP server that would help tools like {{:https://anthropic.com/}Claude Code}
+to choose OCaml packages to solve users' problems.
+
+It's been somewhat easier, partly due to inertia, to carry on with projects that had been in flight at the time
+I started. Things like getting the odoc 3 generated docs onto ocaml.org, which is
+finally complete only {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}as of this week!}.
+This has taken a whole lot of time, but I'm really pleased with the end results. There's
+still an awful lot of improvements that I'd like to see made, which, after drawing breath for
+a couple of weeks, I'll be writing down.
+
+An itch I've been wanting to scratch for a long time has been to look at client-side ocaml
+notebooks. I decided to make this an integral {{!/site/blog/2025/04/page-"this-site"}feature of this blog},
+and I've learnt an awful
+lot doing it. An important feature of this that I've been keeping in mind is the idea that
+we could use the ocaml-docs-ci tool to build the libraries, which would allow us to host
+a toplevel for every single package in opam-repository - allowing at best 
+{{:https://discuss.ocaml.org/t/an-example-for-every-ocaml-package/16953/10}interactive examples}, and at bare minimum merlin for
+live type-checking and autocompletion. The important principles to keep in mind for this
+are that:
+
+- We have one 'toplevel' javascript file, and libraries and cmis are dynamically loaded
+- The interface between the frontend and the worker must not rely on a matched pair, e.g.
+  an OCaml-5.3-compiled frontend might be talking to an OCaml-4.08-compiled worker thread - 
+  or even an oxcaml one!
+
+I have this all working on my blog, where I have both an oxcaml worker and a standard ocaml
+worker and they both dynamically load in libraries and cmis as specified on the page.
+
+I've also supervised a 1A course for the first time - {{:https://www.cl.cam.ac.uk/teaching/2425/IntroProb/}Introduction to Probability},
+and I've done some marking for the 1A Foundations of Computer Science. 
+
+Something that I'd been expecting to do a lot on was work with oxcaml, but as the release
+happened later than anticipated and it coinciding with the marking and supervising, I've
+not done quite as much of this as I had thought I would. In addition, I had anticipated
+working on Odoc to start implementing the new features of oxcaml, but to avoid
+duplicating effort I've been waiting for the patches that have already been written at Jane Street to at least
+get odoc to compile, which have taken longer than I had hoped to get to me.
+
+{1 What's next}
+More interestingly, what's next? What do I think I'll be doing for the next few months?
+As always, there's way too much work to do, so this is a brain-dump of everything:
+
+{2 Teaching}
+A looming, terrifying, but tremendously exciting opportunity is teaching of 1A Foundations
+of Computer Science. This is amongst the first courses we teach our incoming undergraduates,
+currently lectured by {{:https://anil.recoil.org/}Anil}. He's on sabbatical this year, and
+has asked me to step up and lecture it. I anticipate the preparation work for this taking
+up a good chunk of my time over the next few months, but at least I can be preparing while
+I don't also have tutees and supervisees to worry about!
+
+{2 Efficient and reusable CI}
+One area I'd like to see progress with is to extract from docs CI the logic that I've been
+using to do efficient builds of packages. As I previously {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}wrote about},
+the new CI system is far more efficient than some of the other ocurrent-based pipelines,
+and it would save a huge amount of compute time if we were to take this tech and apply it
+elsewhere. A recent chat with {{:https://anil.recoil.org/}Anil} helped me to realise that
+one of the reasons that Docker took off so well was that it allowed people to share environemnts
+so incredibly easily, and this is a lesson that the docs CI has failed to learn.
+
+So, how might we take what we've got and produce something useful to everyone? We need to
+take a hammer to the fracture points of the docs CI service and split it into individually
+useful parts. Here are some next steps as I see them now. Let's take the solver out of docs
+CI, and have a service whose sole job is to create a repository of
+up-to-date solutions for all versions of all packages in opam-repository. These are the data
+that allow us to build the tree of package builds.
+
+Turn these solutions into one giant build. Perhaps a script? Maybe a giant buildkit dockerfile? This is 
+very similar to Mark Elvers' {{:https://github.com/mtelvers/ohc}day10} project. We can
+get this running on a big machine and just see how fast we can build everything. The key thing
+here is that it should be {e trivial} to run this on a linux box. A raspberry pi or a 768-core
+behemoth with 3TiB of ram.
+
+These tools can then be used as the foundation for other CI systems. For opam-repo-ci, where we
+should be able to do the builds for a new package incredibly quickly. For opam-health-check, where
+we currently build foundational packages like dune and findlib {i thousands of times} per run. 
+
+Once we've got the packages built, docs CI is simply a pass over the top of the built artifacts.
+ocaml-docs-ci already demonstrates this - it only takes a few hours to rebuild all the docs when
+a new version of odoc is released, but in a way that only benefits docs! All the CI systems should
+be able to use this. 
+
+We should also then be able to run js_of_ocaml on the libraries to build to infrastructure needed
+for the per-package toplevels for ocaml.org that I mentioned above. Each of these steps should be
+separate stages in a pipeline - one where each step produces artifacts for the next to consume.
+
+When we mix in some of the projects that other people in the team are working on, like David's
+work on {{:https://www.dra27.uk/blog/}relocatable OCaml}, we've got something that might be able
+to form a basis for a binary cache for Dune Package Management, particularly when we involve
+Ryan's {{:https://ryan.freumh.org/papers.html#2025-arxiv-hyperres}Hyperres} paper so we might
+check that dependencies from outside of the OCaml universe are correct. Can we use {{:https://github.com/quantifyearth/shark}Patrick and Michael's shark}
+to do the build steps? Can we use these images to serve up toplevels for ocaml.org that are
+{e real toplevels} rather than javascript toplevels? There are a lot of interesting directions
+to take this work.
+
+{2 Odoc paper}
+An area where I've really made a shockingly small amount of progress is to write up all the
+work that's gone into Odoc over the past 6 (!!!) years.
+
+{2 AI work}
+I'd like to carry on the work I've started with Sadiq on the interaction of LLMs with OCaml.
+Getting the package search to work sensibly for an MCP server is first on the list, but also
+doing some reinforcement learning to improve specifically the perfomance on OCaml is very
+interesting, but not something I've managed to carve out the time for yet. Something along
+the lines of {{:https://arxiv.org/abs/2504.21798}swesmith} but adapted for OCaml.
+
+{2 Oxcaml Odoc}
+Odoc needs to have some work done on it to support the new work that's gone into oxcaml,
+for example documenting of the modes. This is something I do expect to be working on soon.
+
+{2 Dune and odoc}
+Work needs to be done on the dune rules for odoc, which currently only support the feature-set
+in odoc 2.x. Paul-Elliot has {{:https://github.com/ocaml/dune/pull/11716}done some work on this},
+but much more needs to be done.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
