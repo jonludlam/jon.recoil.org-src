@@ -11,8 +11,8 @@ Some of the highlights include:
 - Image, video and audio support
 - Separation of API docs by library
 
-A huge amount of work went into the Odoc 3.0 release, and I'd like to thank my colleagues at
-Tarides, in particular {{:}Paul-Elliot} and {{:}Jules} for the work they put into this.
+A huge amount of work went into the {{:https://discuss.ocaml.org/t/ann-odoc-3-0-released/16339}Odoc 3.0 release}, and I'd like to thank my colleagues at
+Tarides, in particular {{:https://github.com/panglesd}Paul-Elliot} and {{:https://github.com/julow/}Jules} for the work they put into this.
 
 But the odoc release happened months ago, so why is it only going live now? So, the doc tool
 itself is only one small part of getting the docs onto ocaml.org. Odoc works on the 
