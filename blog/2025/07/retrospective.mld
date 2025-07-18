@@ -62,7 +62,7 @@ working on Odoc to start implementing the new features of oxcaml, but to avoid
 duplicating effort I've been waiting for the patches that have already been written at Jane Street to at least
 get odoc to compile, which have taken longer than I had hoped to get to me.
 
-{1 What's next}
+{1 What's next?}
 With that in mind, Anil and I then talked about the bigger picture, as those of you who
 know Anil will be entirely unsurprised to hear! In particular, how will we be weaving
 the various threads of these activites - the teaching of OCaml, the large-scale (for OCaml)
