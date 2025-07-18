@@ -1,11 +1,21 @@
 {0 4 months in, a retrospective}
 
-@published 2025-07-17
+@published 2025-07-18
 
-It's been four months since starting back at the university, and time to do a bit of
-a retrospective and forward-looking plan for the next 3-4 months.
+Astonishingly, it's already been {i four whole months} since starting back at the university,
+which I find incredibly hard to believe. I'm utterly convinced that it was only a couple of
+weeks ago that I walked back into the Computer Laboratory as an SRA for the first time since
+2021, but here we are, at the end of term already. Time to do a bit of
+a retrospective and forward-looking plan for the next 3-4 months!
 
 {1 What's happened?}
+On wednesday this week, I had a chance to sit down with Anil, supposedly to talk about
+the upcoming lecturing of 1A Foundations of Computer Science, but we ended up talking
+about what I've been doing for the past few months, and where it fits into the broader
+picture of the group as a whole. It was a really useful conversation, and I thought it
+would be good to outline it here while it's fresh in my mind.
+
+So then, to start, what have I been doing? What have I achieved? What have I learnt?
 It's been a bit of a daunting experience, landing in a team that are already working
 one hundred miles an hour on things well out of my comfort zone. I've been going to
 group meetings and having lots of interesting conversations, but I've found it
@@ -18,13 +28,13 @@ create an MCP server that would help tools like {{:https://anthropic.com/}Claude
 to choose OCaml packages to solve users' problems.
 
 It's been somewhat easier, partly due to inertia, to carry on with projects that had been in flight at the time
-I started. Things like getting the odoc 3 generated docs onto ocaml.org, which is
+I started. Things like getting the Odoc 3 generated docs onto ocaml.org, which is
 finally complete only {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}as of this week!}.
 This has taken a whole lot of time, but I'm really pleased with the end results. There's
 still an awful lot of improvements that I'd like to see made, which, after drawing breath for
 a couple of weeks, I'll be writing down.
 
-An itch I've been wanting to scratch for a long time has been to look at client-side ocaml
+An itch I'd been wanting to scratch for a long time has been to look at client-side ocaml
 notebooks. I decided to make this an integral {{!/site/blog/2025/04/page-"this-site"}feature of this blog},
 and I've learnt an awful
 lot doing it. An important feature of this that I've been keeping in mind is the idea that
@@ -53,25 +63,20 @@ duplicating effort I've been waiting for the patches that have already been writ
 get odoc to compile, which have taken longer than I had hoped to get to me.
 
 {1 What's next}
-More interestingly, what's next? What do I think I'll be doing for the next few months?
-As always, there's way too much work to do, so this is a brain-dump of everything:
-
-{2 Teaching}
-A looming, terrifying, but tremendously exciting opportunity is teaching of 1A Foundations
-of Computer Science. This is amongst the first courses we teach our incoming undergraduates,
-currently lectured by {{:https://www.cl.cam.ac.uk/teaching/2425/FoundsCS/}Anil}. He's on sabbatical this year, and
-has asked me to step up and lecture it. I anticipate the preparation work for this taking
-up a good chunk of my time over the next few months, but at least I can be preparing while
-I don't also have tutees and supervisees to worry about!
+With that in mind, Anil and I then talked about the bigger picture, as those of you who
+know Anil will be entirely unsurprised to hear! In particular, how will we be weaving
+the various threads of these activites - the teaching of OCaml, the large-scale (for OCaml)
+CI work, the LLMs and Oxcaml work together to form a coherent whole? How do I find a 
+balance between them and ensure that we find {{:https://arxiv.org/abs/1106.0848}synergies}
+as opposed to pulling in different directions? How do make sure what we're doing helps us
+navigate the upending of the nature of development that agentic coding is bringing?
 
 {2 Efficient and reusable CI}
-One area I'd like to see progress with is to extract from docs CI the logic that I've been
+A clear and obvious area where we'll be able to see real progress is to extract from docs CI the logic that I've been
 using to do efficient builds of packages. As I previously {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}wrote about},
 the new CI system is far more efficient than some of the other ocurrent-based pipelines,
 and it would save a huge amount of compute time if we were to take this tech and apply it
-elsewhere. A recent chat with {{:https://anil.recoil.org/}Anil} helped me to realise that
-one of the reasons that Docker took off so well was that it allowed people to share environemnts
-so incredibly easily, and this is a lesson that the docs CI has failed to learn.
+elsewhere. 
 
 So, how might we take what we've got and produce something useful to everyone? We need to
 take a hammer to the fracture points of the docs CI service and split it into individually
@@ -80,11 +85,15 @@ CI, and have a service whose sole job is to create a repository of
 up-to-date solutions for all versions of all packages in opam-repository. These are the data
 that allow us to build the tree of package builds.
 
-Turn these solutions into one giant build. Perhaps a script? Maybe a giant buildkit dockerfile? This is 
+Next, turn these solutions into one giant build. Perhaps a script? Maybe a giant buildkit dockerfile? This is 
 very similar to Mark Elvers' {{:https://github.com/mtelvers/ohc}day10} project. We can
 get this running on a big machine and just see how fast we can build everything. The key thing
 here is that it should be {e trivial} to run this on a linux box. A raspberry pi or a 768-core
-behemoth with 3TiB of ram.
+behemoth with 3TiB of ram. Just how fast {e can} we get it going? It's already building in a 
+couple of days using {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}sage}, but that's
+using ocurrent/obuilder, which isn't quite the right tool for the job, and on a relatively
+puny machine. Can we do it in an hour? 10 minutes? Certainly the incrememntal builds ought
+to be done in seconds. What's the limit?
 
 These tools can then be used as the foundation for other CI systems. For opam-repo-ci, where we
 should be able to do the builds for a new package incredibly quickly. For opam-health-check, where
@@ -105,35 +114,55 @@ to form a basis for a binary cache for Dune Package Management, particularly whe
 Ryan's {{:https://ryan.freumh.org/papers.html#2025-arxiv-hyperres}Hyperres} paper so we might
 check that dependencies from outside of the OCaml universe are correct. Can we use {{:https://github.com/quantifyearth/shark}Patrick and Michael's shark}
 to do the build steps? Can we use these images to serve up toplevels for ocaml.org that are
-{e real toplevels} rather than javascript toplevels? There are a lot of interesting directions
-to take this work.
+{e real toplevels} rather than javascript toplevels? Can we use these build environments to
+do help with reinforcement learning to train LLMs on OCaml code? There are a lot of interesting directions
+to take this work. 
 
-{2 Odoc paper}
+{2 Other projects}
+There are, of course, other responsibilities that I have. Some of these I'll be able to fit
+in with the theme above, and some - well - maybe I'll have to figure out how to delegate them,
+a skill that I am not particularly good at, but one that I feel I should learn!
+
+{3 Teaching}
+A looming, terrifying, but tremendously exciting opportunity is teaching of 1A Foundations
+of Computer Science. This is amongst the first courses we teach our incoming undergraduates,
+currently lectured by {{:https://www.cl.cam.ac.uk/teaching/2425/FoundsCS/}Anil}. As he's on
+sabbatical this year, he
+has asked me to step up and lecture it. This is definitely not one for delegation!
+
+The immediate question, partly raised by my work with Sadiq, is:
+what do we do about LLMs? How should we adjust our teaching to take into account the existence
+of these tools? We had a very interesting chat earlier in the term with Professor {{:https://eecs.iisc.ac.in/people/prof-viraj-kumar/}Viraj Kumar}
+from {{:https://eecs.iisc.ac.in/}IISc} who was visiting Cambridge earlier this year. He's been
+{{:https://dl.acm.org/doi/10.1145/3724363.3729100}working on this question} for a while now, and I hope to have some more conversations with him
+over the summer.
+
+{3 Odoc paper}
 An area where I've really made a shockingly small amount of progress is to write up all the
 work that's gone into Odoc over the past 6 (!!!) years.
 
-{2 Odoc notebooks}
+{3 Odoc notebooks}
 This needs to be tidied up and a v0.1 released. In particular, the work on js_top_worker 
 might well be shared with Arthur's {{:https://github.com/art-w/x-ocaml}x-ocaml} for a unified
 toplevel experience.
 
-{2 AI work}
+{3 AI work}
 I'd like to carry on the work I've started with Sadiq on the interaction of LLMs with OCaml.
 Getting the package search to work sensibly for an MCP server is first on the list, but also
 doing some reinforcement learning to improve specifically the perfomance on OCaml is very
 interesting, but not something I've managed to carve out the time for yet. Something along
 the lines of {{:https://arxiv.org/abs/2504.21798}swesmith} but adapted for OCaml.
 
-{2 Oxcaml Odoc}
+{3 Oxcaml Odoc}
 Odoc needs to have some work done on it to support the new work that's gone into oxcaml,
 for example documenting of the modes. This is something I do expect to be working on soon.
 
-{2 Dune and odoc}
+{3 Dune and odoc}
 Work needs to be done on the dune rules for odoc, which currently only support the feature-set
 in odoc 2.x. Paul-Elliot has {{:https://github.com/ocaml/dune/pull/11716}done some work on this},
 but much more needs to be done.
 
-{2 Further general odoc work}
+{3 Further general odoc work}
 - Better source rendering
 - Syntax for linking to source
 - Custom tags (used in odoc_notebook)
@@ -141,11 +170,13 @@ but much more needs to be done.
 - Unifying paths and cpaths (https://github.com/jonludlam/odoc/tree/parameterised-paths)
 
 {1 What to {i actually} do?}
-
 There are a lot of things in the above list. I'm not sure yet how I manage to figure out
 what I actually end up doing, and how that helps me to help Tarides, to fit in as a
 useful member of the EEG group, and to make sure I'm doing what's right for my own
-future.
+future. I feel the core project of the CI work will help everyone, but slotting the other
+work into the bigger picture will require some careful thought.
+
+
 
 
 
