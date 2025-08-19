@@ -23,7 +23,7 @@ RUN opam pin add -n git+https://github.com/jonludlam/odoc_notebook
 RUN opam update
 RUN opam install core base bos odoc_notebook odoc-driver patience_diff astring brr note js_top_worker-bin rresult opam-format
 RUN echo hi8
-RUN opam install mariadb caqti
+RUN opam install mariadb caqti cohttp
 RUN opam update; opam upgrade -y
 RUN opam update --switch oxcaml; opam upgrade -y --switch oxcaml
 RUN sudo mkdir -p /build/_tmp/_odoc /build/_tmp/html/assets
@@ -34,7 +34,7 @@ RUN echo foooooppppp
 RUN opam update
 RUN opam upgrade -y
 RUN opam update --switch oxcaml; opam upgrade -y --switch oxcaml
-RUN opam exec -- jtw opam core patience_diff astring brr note mime_printer fpath rresult opam-format bos --output _tmp/html/_opam
+RUN opam exec -- jtw opam core cohttp patience_diff astring brr note mime_printer fpath rresult opam-format bos --output _tmp/html/_opam
 RUN opam exec -- jtw opam --switch oxcaml --output _tmp/html/oxcaml core mime_printer astring parallel
 COPY blog /build/blog
 COPY notebooks /build/notebooks
