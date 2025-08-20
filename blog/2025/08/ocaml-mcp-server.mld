@@ -1,0 +1,503 @@
+{0 An OCaml MCP server}
+
+@published 2025-08-20
+@notanotebook
+
+
+LLMs are proving themselves superbly capable of a variety of coding tasks,
+having been trained against the enormous amount of code, tutorials and manuals
+available online. However, with smaller languages like OCaml there simply
+isn't enough training material out there, particularly when it comes to new
+language features like {{: https://ocaml.org/manual/5.3/effects.html} effects}
+or new packages that haven't had time to be widely used. With my colleagues
+{{: https://anil.recoil.org/} Anil}, {{: https://ryan.freumh.org/} Ryan} and
+{{: https://toao.com/} Sadiq} we've been exploring ways to
+{{: https://anil.recoil.org/notes/cresting-the-ocaml-ai-hump} improve this situation}.
+One way we can mitigate these challenges is to provide a Model Context Protocol
+({{: https://modelcontextprotocol.io} MCP}) server that's capable of providing
+up-to-date info on the current state of the OCaml world.
+
+The {{: https://docs.anthropic.com/en/docs/mcp} MCP specification} was released
+by Anthropic at the end of last year. Since then it has become an astonishingly
+popular mechanism for extending the capabilities of LLMs, allowing them to
+become incredibly powerful agents capable of much more than simply chatting.
+There are now a huge variety of MCP servers, from one that provides
+{{: https://github.com/r-huijts/firstcycling-mcp} professional cycling data} to
+one that can {{: https://github.com/GongRzhe/Gmail-MCP-Server} do your email}.
+The {{: https://github.com/punkpeye/awesome-mcp-servers} awesome mcp server list}
+already lists hundreds, and these are just the {e awesome} ones!
+
+I've been working with {{: https://toao.com/} Sadiq} to make an
+{{: https://github.com/sadiqj/odoc-llm/} MCP server for OCaml}, with an initial
+focus on building it such that it can be hosted for everyone rather than
+something that is run locally. Our plan is to start with a service that can
+help with choosing OCaml libraries, by taking advantage of the work done by
+{{: https://github.com/ocurrent/ocaml-docs-ci/} ocaml-docs-ci} which is the
+tool used to generate the documentation for all packages in
+{{: https://github.com/ocaml/opam-repository} opam-repository} and is served by
+{{: https://ocaml.org/} ocaml.org}. As well as producing HTML docs, we can also
+extract a number of other formats from the pipeline, including a newly created
+{{: https://github.com/ocaml/odoc/pull/1341} markdown backend}. Using this, we
+can get markdown-formatted documentation for the every version of every package
+in the OCaml ecosystem.
+
+{1 Semantic searching}
+
+The first thing we focused on was being able to do a {e semantic search} over
+the whole OCaml ecosystem. To do this, we're using
+{{: https://huggingface.co/spaces/hesamation/primer-llm-embedding} LLM embeddings},
+for which we need some natural-language description to seach through.
+
+The documentation produced by [ocaml-docs-ci] is generated per library module
+using {{: https://github.com/ocaml/odoc} odoc}, relying on the package author
+to provide documentation comments for each element in the signature. However,
+even if the package authors {e hasn't} provided any documentation, we can
+still see the types, values, modules and so on that the library exposes, and
+this is often enough to get a good idea of what the module does. We then take
+these documentation pages, which are formatted in markdown, and summarise them
+via an LLM at the module level. This is done hierarchically, so we start with
+the 'deepest' modules, and then insert their summaries into the text of their
+parent module, then summarise those and so on. We found it useful to include
+the names and {{: https://ocaml.github.io/odoc/odoc/odoc_for_authors.html#preamble} preambles}
+of the ancestor modules when doing the summarisation to give additional context
+to the LLM. For example, here is the prompt generated for a submodule of the
+{{: https://erratique.ch/software/astring} astring} library:
+
+{@markdown[
+Module: Astring.String.Ascii
+
+Ancestor Module Context:
+- Astring: Alternative `Char` and `String` modules.
+Open the module to use it. This defines one value in your scope, redefines the
+`(^)` operator, the `Char` module and the `String` module. Consult the
+differences with the OCaml `String` module, the porting guide and a few
+examples.
+- Astring.String: Strings, `substrings`, string sets and maps.
+A string `s` of length `l` is a zero-based indexed sequence of `l` bytes. An
+index `i` of `s` is an integer in the range [`0`;`l-1`], it represents the
+`i`th byte of `s` which can be accessed using the string indexing operator
+`s.[i]`.
+Important. OCaml's `string`s became immutable since 4.02. Whenever possible
+compile your code with the `-safe-string` option. This module does not expose
+any mutable operation on strings and assumes strings are immutable. See the
+porting guide.
+
+Module Documentation: US-ASCII string support.
+References.
+
+## Predicates
+- val is_valid : string -> bool (* `is_valid s` is `true` iff only for all
+indices `i` of `s`, `s.[i]` is an US-ASCII character, i.e. a byte in the range
+[`0x00`;`0x7F`]. *)
+
+## Casing transforms
+The following functions act only on US-ASCII code points that is on bytes in
+range [`0x00`;`0x7F`], leaving any other byte intact. The functions can be
+safely used on UTF-8 encoded strings; they will of course only deal with
+US-ASCII casings.
+- val uppercase : string -> string (* `uppercase s` is `s` with US-ASCII
+  characters `'a'` to `'z'` mapped to `'A'` to `'Z'`. *)
+- val lowercase : string -> string (* `lowercase s` is `s` with US-ASCII
+  characters `'A'` to `'Z'` mapped to `'a'` to `'z'`. *)
+- val capitalize : string -> string (* `capitalize s` is like `uppercase`
+  but performs the map only on `s.[0]`. *)
+- val uncapitalize : string -> string (* `uncapitalize s` is like `lowercase`
+  but performs the map only on `s.[0]`. *)
+
+## Escaping to printable US-ASCII
+- val escape : string -> string (* `escape s` is `s` with: *)
+- val unescape : string -> string option (* `unescape s` unescapes what
+  `escape` did. The letters of hex escapes can be upper, lower or mixed case,
+  and any two letter hex escape is decoded to its corresponding byte. Any other
+  escape not defined by `escape` or truncated escape makes the function return
+  `None`. *)
+- val escape_string : string -> string (* `escape_string s` is like `escape`
+  except it escapes `s` according to OCaml's lexical conventions for strings
+  with: *)
+- val unescape_string : string -> string option (* `unescape_string` is to
+  `escape_string` what `unescape` is to `escape` and also additionally
+  unescapes the sequence `"\\'"` (`0x5C,0x27`) to `"'"` (`0x27`). *)
+]}
+
+where clearly the package author has provided excellent documentation comments.
+This is then passed to an LLM which generated the following description:
+
+{[
+This module provides functions to check if a string contains only US-ASCII
+characters, convert case for ASCII letters, and escape or unescape strings
+using ASCII conventions. It operates on standard OCaml strings, treating
+them as sequences of bytes, and ensures compatibility with UTF-8 encoded
+strings when transforming case. Use cases include sanitizing input for
+ASCII-only protocols, preparing strings for environments requiring strict
+ASCII formatting, and handling escaped string representations in
+configuration or serialization contexts.
+]}
+
+Once we have these natural language descriptions, we can generate embeddings for
+them to allow for semantic search amongst all modules in opam.
+
+In addition to the module descriptions, we also generate similar
+natural-language descriptions of the {e package} as a whole, by taking the
+README from the package and summarising it similarly. Where there is no README,
+we summarise the summaries of the modules of the libraries, so we're always able
+to generate some text description of the entire package.
+
+To help with the ranking, we're also using a measure of popularity for both
+modules and packages. For packages, we're using the number of reverse
+dependencies in opam as a proxy for popularity, and for modules, we're using the
+"occurrences" generated as part of the docs build. These \[occurrences\] are a
+count of how often modules are used in other modules, and are calculated by
+looking at the compiled \[cmt\] files and resolving references to external
+modules using odoc's internal logic and counting them.
+
+Once we have both the module and package summaries, we generate an embedding of
+the descriptions to allow for a semantic search to be performed efficiently.
+We're using this in two ways - to search for packages for broad queries of
+functionality, which just uses the package summaries, and for more specific
+queries to search for modules within packages.
+
+For the module search, if the packages to search in haven't been specified, we
+search for both modules and packages and then combine the results. This is
+particularly helpful when the search is for generic functionality that might be
+found in more specific packages. For example, a module-only search for the term
+"time and date manipulation functions" returns the strongest match with a {{:
+https://ocaml.org/p/caqti/2.2.4/doc/caqti.platform/Caqti_platform/Conv/index.html}
+module from caqti}, which, as caqti is a library for talking to relational
+databases, might not be what the user is looking for.
+
+We then put these search tools into an MCP server, along with a little more functionality. The server currently provides these five functions:
+{ol {+ Search for OCaml packages
+}{+ Search for OCaml modules (optionally within packages)
+}{+ Get the summary description of a package
+}{+ Get the raw Markdown docs for a module (optionally within a package)
+}{+ Search using sherldoc
+}}
+
+The first 2 use the LLM-generated summaries as described above, and the last is
+using {{: https://github.com/art-w/} Arthur's} {{:
+https://github.com/art-w/sherlodoc} sherlodoc tool} which can do various
+searches, including type-based search, across the output of the {{:
+https://github.com/ocurrent/ocaml-docs-ci} ocaml-docs-ci}.
+
+{1 Example searches}
+
+The following are the results from some example package searches:
+{ul {- "HTTP client"
+}}
+
+{@nolang[
+#1 - http (v6.1.1)
+  Similarity: 0.7593
+  Reverse Dependencies: 407
+  Combined Score: 0.6588
+  Description: This package provides a comprehensive OCaml library for building
+HTTP clients and servers with support for multiple asynchronous programming
+model s. It enables developers to implement efficient, portable HTTP services
+using different backends such as Lwt, Async, Eio, and JavaScript, making it
+suitable for both Unix and browser environments. The library emphasizes
+performance, modularity, and interoperability, allowing custom backend
+implementations and seamless in tegration with other OCaml libraries. It is
+commonly used in web services, API clients, standalone microkernels, and
+OCaml-to-JavaScript compilations for web app lications.
+
+#2 - cohttp (v6.1.1)
+  Similarity: 0.7377
+  Reverse Dependencies: 403
+  Combined Score: 0.6435
+  Description: This package provides a comprehensive library for building HTTP
+ clients and servers in OCaml. It supports multiple asynchronous programming
+models and backends, enabling flexible development across different runtime
+environments. The library offers efficient handling of HTTP/1.1 and HTTPS, with
+portable pa rsing and modular architecture. It is widely used for web services,
+API clients, and standalone network applications.
+
+#3 - cohttp-lwt-unix (v6.1.1)
+  Similarity: 0.7089
+  Reverse Dependencies: 338
+  Combined Score: 0.6212
+  Description: This package provides an implementation of the Cohttp library
+using the Lwt asynchronous programming framework with Unix bindings. It enables
+buil ding efficient HTTP clients and servers in OCaml, supporting both
+synchronous and asynchronous network operations. The package handles core HTTP
+functionality, i ncluding request and response parsing, connection management,
+and HTTPS support via OCaml-TLS. It is suitable for applications requiring
+high-performance web ser vices, microservices, or networked applications in the
+OCaml ecosystem.
+
+#4 - cohttp-lwt (v6.1.1)
+  Similarity: 0.7067
+  Reverse Dependencies: 367
+  Combined Score: 0.6207
+  Description: This package provides a comprehensive library for building HTTP
+ clients and servers in OCaml, supporting multiple asynchronous programming
+models. It enables developers to implement efficient, portable HTTP services
+ with support for both synchronous and asynchronous I/O, including secure HTTPS
+ communicatio n. The package includes backends for Lwt, Async, Mirage,
+ JavaScript, and Eio, making it versatile for use in different runtime
+ environments, from Unix servers to web browsers. It is well-suited for
+ applications requiring high-performance networking, such as web services, API
+ clients, and embedded networked systems.
+
+#5 - quests (v0.1.3)
+  Similarity: 0.7960
+  Reverse Dependencies: 1
+  Combined Score: 0.6180
+  Description: This package provides a high-level HTTP client library for making
+web requests in OCaml. It simplifies interacting with HTTP servers by offering a
+ n intuitive API for common methods like GET and POST, supporting features such
+ as query parameters, form and JSON data submission, and automatic handling of
+ gzip compression and redirects. It also includes authentication mechanisms like
+ basic and bearer tokens, with partial support for sessions. Typical use cases
+ include consuming REST APIs, scraping web content, or integrating with web
+ services securely and efficiently.
+
+#6 - ezcurl (v0.2.4)
+  Similarity: 0.7395
+  Reverse Dependencies: 6
+  Combined Score: 0.5979
+  Description: This package provides a simplified interface for making HTTP
+requests in OCaml, built on top of the OCurl library. It addresses the need for
+an ea sy-to-use, reliable, and stable API for handling common web interaction
+tasks, such as fetching URLs and processing responses. The package supports both
+synchron ous and asynchronous operations, enabling efficient handling of
+parallel requests and non-blocking I/O. Practical use cases include web
+scraping, API client deve lopment, and integrating HTTP-based services into
+OCaml applications.
+
+]}
+{ul {- "Cryptographic hash"
+}}
+
+{@nolang[
+#1 - digestif (v1.3.0)
+  Similarity: 0.8165
+  Reverse Dependencies: 621
+  Combined Score: 0.7041
+  Description: This package provides a comprehensive implementation of
+  cryptographic hash functions, supporting algorithms such as MD5, SHA1, SHA2,
+  SHA3, WHIRLPOOL, BLAKE2, and RIPEMD160. It allows users to choose between C
+  and OCaml backends at link time, offering flexibility in performance and
+  deployment scenarios. The library is designed for applications requiring
+  secure hashing, such as data integrity verification, digital signatures, and
+  cryptographic protocols. It is well-suited for systems programming and
+  security-related applications in the OCaml ecosystem.
+
+#2 - ppx_hash (vv0.17.0)
+  Similarity: 0.7284
+  Reverse Dependencies: 3337
+  Combined Score: 0.6833
+  Description: This package generates efficient hash functions for OCaml types
+  based on their structure, enabling precise control over hashing behavior. It
+  addresses the limitations of OCaml's built-in polymorphic hashing by allowing
+  users to define custom hash functions during type derivation. Key features
+  include selective field ignoring, support for folding-style hash accumulation,
+  and compatibility with comparison and serialization systems. It is suitable
+  for use with hash tables, persistent data structures, and any application
+  requiring deterministic, type-driven hashing.
+
+#3 - ez_hash (v0.5.3)
+  Similarity: 0.8366
+  Reverse Dependencies: 3
+  Combined Score: 0.6583
+  Description: This package provides a straightforward interface to common
+  cryptographic hash functions, simplifying their use in OCaml applications. It
+  wraps secure, widely-used algorithms like SHA-256 and Blake2b, offering
+  consistent and safe APIs for hashing data. The library is designed for clarity
+  and ease of integration, making it ideal for developers needing reliable
+  cryptographic operations without deep expertise in security. Practical uses
+  include data integrity verification, digital signatures, and secure data
+  storage.
+
+#4 - murmur3 (v0.3)
+  Similarity: 0.7805
+  Reverse Dependencies: 1
+  Combined Score: 0.6072
+  Description: This package provides OCaml bindings for MurmurHash, a fast and
+widely used non-cryptographic hash function. It enables efficient hash value
+ compu tation for arbitrary data, making it suitable for applications like hash
+tables, checksums, and data fingerprinting. The bindings offer consistent
+hashing across platforms and integrate seamlessly into OCaml projects requiring
+high-performance hashing. Use cases include caching, distributed systems, and
+data integrity ve rification where cryptographic security is not required.
+
+#5 - kdf (v1.0.0)
+  Similarity: 0.6775
+  Reverse Dependencies: 473
+  Combined Score: 0.6033
+  Description: This package implements standard key derivation functions (KDFs)
+for cryptographic applications in OCaml. It supports scrypt, PBKDF1, PBKDF2, and
+HKDF, enabling secure generation of cryptographic keys from passwords or shared
+secrets. These functions help mitigate brute-force attacks and ensure keys are
+de rived in a reproducible, secure manner. Use cases include password-based
+encryption, secure token generation, and key material expansion in cryptographic
+protoco ls.
+]}
+
+and a module-level search for "time and date manipulation functions"
+
+{@nolang[
+#1 - timmy-jsoo: Timmy_jsoo
+  Similarity: 0.5460
+  Original Similarity: 0.7800
+  Popularity Score: 0.0000
+  Description: This module provides precise date and time arithmetic,
+conversion, and comparison operations across multiple representations, including
+OCaml-nati ve, JavaScript, and string formats. It works with structured types
+like `Date.t`, `Time.t`, and ISO weeks, supporting timezone-aware
+transformations and RFC3339 formatting. Concrete use cases include cross-runtime
+timestamp synchronization, calendar-aware scheduling, and robust temporal data
+validation in distributed sys tems.
+
+#2 - calendar: CalendarLib
+  Similarity: 0.5331
+  Original Similarity: 0.7616
+  Popularity Score: 0.3448
+  Description: This module provides precise date and time manipulation with
+  support for calendar operations, time zones, periods, and formatted
+  input/output. It works with types like `Calendar.t`, `Date.t`, `Time.t`, and
+  `Period.t` to handle tasks such as event scheduling, timestamp conversion, and
+  historical date calculations. Concrete use cases include scheduling systems,
+  log timestamping, holiday calculations, and cross-timezone time normalization.
+
+#3 - calendar: CalendarLib.Fcalendar
+  Similarity: 0.5191
+  Original Similarity: 0.6820
+  Popularity Score: 0.1390
+  Description: This module provides float-based calendar operations for date
+  creation, conversion, and manipulation, including time zone adjustments,
+  component extraction (year/month/day/hour/second), and arithmetic with
+  periods. It works with a `t` type representing time as float seconds,
+  alongside `day`, `month`, `year`, and Unix time structures, prioritizing Unix
+  time precision over sub-second accuracy. It suits applications tolerating
+  minor imprecision in date comparisons or arithmetic, such as logging systems
+  or coarse-grained scheduling, where exact floating-point equality isn't
+  critical.
+
+#4 - calendar: CalendarLib.Calendar_builder.Make
+  Similarity: 0.5112
+  Original Similarity: 0.7302
+  Popularity Score: 0.0785
+  Description: This module combines date and time functionality to construct and
+  manipulate calendar values with float-based precision, offering operations
+  like timezone conversion, component extraction (day, month, year, etc.), and
+  arithmetic using `Period.t`. It works with a calendar type `t` that integrates
+  date and time components, alongside conversions to Unix timestamps, Julian day
+  numbers, and structured representations like `Unix.tm`. Designed for scenarios
+  requiring precise temporal calculations (e.g., calendar arithmetic, Gregorian
+  date validation, or leap day checks), it balances flexibility with known
+  precision limitations inherent to float-based time representations.
+
+#5 - timmy-unix: Clock
+  Similarity: 0.5080
+  Original Similarity: 0.7257
+  Popularity Score: 0.0000
+  Description: This module provides functions to retrieve the current POSIX
+  time, the local timezone, and the current date in the local timezone. It works
+  with time and date types from the Timmy library, specifically `Timmy.Time.t`
+  and `Timmy.Date.t`. Use this module to obtain precise time and date
+  information for logging, scheduling, or time-based computations.
+]}
+
+and for "Balanced Tree":
+
+{@nolang[
+#1 - grenier: Mbt
+  Similarity: 0.5274
+  Original Similarity: 0.7534
+  Popularity Score: 0.0495
+  Description: This module implements a balanced binary tree structure with
+  efficient concatenation and size-based operations. It supports tree
+  construction through leaf and node functions, automatically balancing nodes
+  and annotating them with values from a provided measure module. It is useful
+  for applications requiring fast access, dynamic sequence management, and
+  efficient merging of tree-based data structures.
+
+#2 - camomile: CamomileLib.AvlTree
+  Similarity: 0.5008
+  Original Similarity: 0.7155
+  Popularity Score: 0.0495
+  Description: This module implements balanced binary trees (AVL trees) with
+  operations for constructing, deconstructing, and traversing trees. It supports
+  key operations like inserting nodes, extracting leftmost/rightmost elements,
+  concatenating trees, and folding or iterating over elements. It is useful for
+  maintaining ordered data with efficient lookup, insertion, and deletion, such
+  as in symbol tables or priority queues.
+
+#3 - batteries: BatAvlTree
+  Similarity: 0.5003
+  Original Similarity: 0.7147
+  Popularity Score: 0.1485
+  Description: This module implements balanced binary trees (AVL trees) with
+  operations for creating, modifying, and traversing trees. It supports tree
+  construction with optional rebalancing, splitting, and concatenation, and
+  provides root, left, and right accessors with failure handling. Concrete use
+  cases include efficient ordered key-value storage, set-like structures, and
+  maintaining sorted data with logarithmic-time insertions and lookups.
+
+#4 - grenier: Bt2
+  Similarity: 0.4927
+  Original Similarity: 0.7039
+  Popularity Score: 0.2634
+  Description: This module implements a balanced binary tree structure with
+  efficient concatenation and rank-based access. It supports creating empty
+  trees, constructing balanced nodes, and joining two trees with logarithmic
+  cost relative to the smaller tree's size. Use cases include maintaining
+  ordered collections with frequent splits and joins, and efficiently accessing
+  elements by position.
+
+#5 - grenier: Mbt.Make
+  Similarity: 0.4913
+  Original Similarity: 0.7019
+  Popularity Score: 0.0495
+  Description: This module implements a balanced tree structure with efficient
+  concatenation and size-based operations. It supports construction of trees
+  using leaf and node functions, where nodes are automatically balanced and
+  annotated with measurable values from module M. The module enables efficient
+  rank queries and joining of trees, with applications in managing dynamic
+  sequences where fast access and concatenation are critical.
+]}
+
+{1 Limitations and future work}
+
+We're aware that there are currently a number of limitations with what's been
+done so far, and there's a lot of exciting things that could quite easily be
+added!
+
+We haven't done much prompt optimisation either for the tools themselves, nor
+their descriptions in the MCP server. We also haven't done much optimisation of
+the information retrieval - and it's clear from some of the results shown above
+that there are improvements to be made in the ranking algorithms. Some obvious
+next steps would be to do some {{: https://arxiv.org/html/2406.12433v2}
+re-ranking} or some form of hybrid search.
+
+A particular challenge is that since this is based entirely off of the
+[ocaml-docs-ci] build, it won't necessarily reflect the actual API your local
+build, as for OCaml, this {{:
+https://jon.recoil.org/blog/2025/04/semantic-versioning-is-hard.html} can't be
+done}. Thibaut Mattio is working on a {{: https://github.com/tmattio/ocaml-mcp}
+local MCP server} that would be perfectly positioned to do some of what we're
+doing, although we'd need to have a good local docs build implemented in dune
+for this to work well.
+
+Also, there's plenty more data that we've collected during the docs builds! We
+can show the implementations of functions, we can expose code samples, select
+different versions of packages and much more. While we've concentrated on the
+search aspects, there's still a lot of low-hanging fruit that can be worked on.
+
+If you're interested in helping us out on this, the project lives {{:
+https://github.com/sadiqj/odoc-llm} on github} - come along and join us!
+
+{1 Using the server}
+
+If you'd like to try it, we've got a demo server running right now. It's hosted
+on dill.caelum.ci.dev here at the Computer Laboratory in the University of
+Cambridge. To enable it with Claude, try this:
+
+{@bash[
+# claude mcp add -t sse ocaml http://dill.caelum.ci.dev:8000/sse
+]}
+
+Obviously this is pre-alpha quality software, and we might take it down with no
+notice, and it might not work as expected, and all of the other usual caveats.
+Let us know if it works, or doesn't, or if you've got some suggestions for
+improvements!
