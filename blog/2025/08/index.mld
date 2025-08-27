@@ -2,5 +2,6 @@
 
 @children_order week33 ocaml-mcp-server
 
-- {{!/site/blog/2025/08/page-"ocaml-mcp-server"}}
+- {{!/site/blog/2025/08/page-"ocaml-lsp-mcp"}Using ocaml-lsp-server via an MCP server}
+- {{!/site/blog/2025/08/page-"ocaml-mcp-server"}An OCaml MCP Server}
 - {{!/site/blog/2025/08/page-"week33"}Week 33}

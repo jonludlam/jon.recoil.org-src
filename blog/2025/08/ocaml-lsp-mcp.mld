@@ -1,0 +1,28 @@
+{0 Using ocaml-lsp-server via an MCP server}
+
+@published 2025-08-27
+@notanotebook
+
+Here's a quick post on how to get the OCaml Language Server (ocaml-lsp-server) working with an MCP server.
+
+We're going to use {{:https://github.com/isaacphi}issacphi}'s adapter for LSP servers, which is written in go. So install go, and then:
+
+{@bash[
+# go install github.com/isaacphi/mcp-language-server@latest
+]}
+
+Once that's done, make sure you've got `ocaml-lsp-server` installed in your switch:
+
+{@bash[
+# opam install ocaml-lsp-server
+]}
+
+Then add the MCP config for claude where you want to run it: 
+
+{@bash[
+# claude mcp add ocamllsp -s local -t stdio -- /Users/jon/go/bin/mcp-language-server -workspace . -lsp ocamllsp
+]}
+
+It'd be nice to get this working `globally` - that is, with `-s user` - but I haven't been able to get that to work yet.
+
+

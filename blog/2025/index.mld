@@ -2,6 +2,8 @@
 
 @children_order 08/ 07/ 06/ 05/ 04/ 03/
 
+- {{!/site/blog/2025/08/page-"ocaml-lsp-mcp"}Using ocaml-lsp-server via an MCP server}
+- {{!/site/blog/2025/08/page-"ocaml-mcp-server"}An OCaml MCP Server}
 - {{!/site/blog/2025/08/page-"week33"}Week 33}
 - {{!/site/blog/2025/07/page-"retrospective"}Retrospective}
 - {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}Odoc 3 is live on OCaml.org!}
