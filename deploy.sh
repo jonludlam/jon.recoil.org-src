@@ -2,7 +2,7 @@
 
 set -ex
 
-docker build . -t foo
+docker build . --target build -t foo
 img=$(docker create foo)
 docker cp $img:/build/site.tar.bz2 .
 scp site.tar.bz2 jon@jon.recoil.org:

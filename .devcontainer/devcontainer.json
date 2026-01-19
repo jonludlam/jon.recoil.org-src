@@ -1,6 +1,27 @@
 {
-    "build": {
-        "dockerfile": "../Dockerfile",
-        "context": ".."
+  "name": "jon.recoil.org",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "..",
+    "target": "dev"
+  },
+  "workspaceFolder": "/build",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/build,type=bind",
+  "remoteUser": "opam",
+  "containerUser": "opam",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ocamllabs.ocaml-platform"
+      ],
+      "settings": {
+        "ocaml.sandbox": {
+          "kind": "opam",
+          "switch": "5.2.0"
+        }
+      }
     }
+  },
+  "forwardPorts": [8000],
+  "postCreateCommand": "mkdir -p _tmp/_odoc _tmp/html/assets"
 }
