@@ -10,6 +10,6 @@ eval $(opam env --switch=5.2.0)
 ./build.sh
 
 # Incremental sync to production server
-rsync -avz _tmp/html/ jon@jon.recoil.org:/var/www/jon.recoil.org/
+rsync -avz -e "ssh -o IgnoreUnknown=UseKeychain" _tmp/html/ jon@jon.recoil.org:/var/www/jon.recoil.org/
 
 echo "Deployed to production: https://jon.recoil.org"
