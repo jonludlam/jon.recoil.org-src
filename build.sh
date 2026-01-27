@@ -19,7 +19,7 @@ fi
 if [ ! -d _tmp/html/oxcaml ]; then
     echo "Running jtw opam for oxcaml switch (first time setup)..."
     # TODO: Add parallel back when oxcaml_effect checksum is fixed upstream
-    jtw opam --switch oxcaml --output _tmp/html/oxcaml core mime_printer astring
+    jtw opam --switch 5.2.0+ox --output _tmp/html/oxcaml core mime_printer astring
 fi
 
 # Generate notebooks from content

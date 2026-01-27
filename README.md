@@ -18,8 +18,8 @@ Source repository for [jon.recoil.org](https://jon.recoil.org), a personal websi
 
 On first run, this does three slow setup steps (only once):
 1. `odoc_driver` → generates `_tmp/_odoc/lib_map.json`
-2. `jtw opam` (5.2.0) → generates `_tmp/html/_opam/`
-3. `jtw opam` (oxcaml) → generates `_tmp/html/oxcaml/`
+2. `jtw opam` (default switch) → generates `_tmp/html/_opam/`
+3. `jtw opam` (5.2.0+ox switch) → generates `_tmp/html/oxcaml/`
 
 After that, only the fast `odoc_notebook generate` runs.
 
