@@ -23,10 +23,7 @@ if [ ! -d _tmp/html/oxcaml ]; then
 fi
 
 # Generate notebooks from content
-odoc_notebook generate \
-    $(find blog -name "*.mld") \
-    $(find notes -name "*.mld") \
-    $(find drafts -name "*.mld") \
-    $(find notebooks -name "*.mld") \
+dune exec -- odoc_notebook generate \
+    blog notes drafts notebooks \
     index.mld reference/index.mld \
     --output _tmp/html --odoc-dir _tmp/_odoc
