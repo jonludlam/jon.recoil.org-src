@@ -27,3 +27,7 @@ dune exec -- odoc_notebook generate \
     blog notes drafts notebooks \
     index.mld reference/index.mld \
     --output _tmp/html --odoc-dir _tmp/_odoc
+
+# Generate atom feed
+dune exec -- scripts/gen_atom.exe
+mv atom.xml _tmp/html/
