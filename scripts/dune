@@ -3,3 +3,7 @@
  (preprocess
   (pps ppx_deriving_yojson))
  (libraries syndic uri unix ptime bos odoc.odoc yojson ISO8601))
+
+(executable
+ (name gen_blog_index)
+ (libraries str))
