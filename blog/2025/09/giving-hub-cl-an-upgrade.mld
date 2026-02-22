@@ -1,0 +1,33 @@
+{0 Giving hub.cl an upgrade}
+
+@published 2025-09-07
+
+For a few years now we've been running [hub.cl.cam.ac.uk], a Jupyterhub instance, for the
+first year course "Foundations of Computer Science". It serves as a hosting site for the
+lecture notes, which come in the form of Jupyter notebooks, and as a playground where students
+can try OCaml, and it also is used to run the assessed exercises that are a mandatory
+part of the course.
+
+Since I spent some time setting it up back in 2018 or so, its aggregated some cruft over
+the years, and has also fallen somewhat behind the bleeding edge of the Jupyter software
+stack. So I thought this year, as I'm actually lecturing the course, I'd give it a bit of
+loving care and attention.
+
+We were still on Jupyterhub 1.5.3 whereas the current release is 5.3.0 - so there was quite
+a bit of work to do. I brief play with putting things on the latest version seemed to break
+quite a lot of things, so I thought it might be better to go back to the drawing board and
+start the config again from scratch. So with some help from Claude, I've now managed to hugely
+simplify the whole config of Jupyterhub, and even given it a makeover to try to match the
+style of www.cst.cam.ac.uk as well. The improvements include:
+
+- Using caddy as a reverse proxy for TLS termination, meaning I don't have to manually renew the letsencrypt cert every 3 months
+- Unifying the configuration of the two container images used for students and instructors
+- Upgrading to much newer jupyterhub, notebook and nbgrader images
+- Simplifying the configuration required to make it work on a new server - persistent user directories are now docker volumes rather than bindmounts on the local filesystem
+- Updating the authentication method to use Raven via OAuth2 rather than the unmaintained {{:https://github.com/pyCav/jupyterhub-raven-auth}jupyterhub-raven-auth} which I'd had to maintain {{:https://github.com/jonludlam/jupyterhub-raven-auth/commit/36eaf16b410e7ac3cfc532269e0ae5f1de34f231}a patch}.
+- Rebasing {{:https://github.com/jonludlam/nbgrader/commit/c83a6cbb7b530ce87b0b157accddcdc832bcba38}my patch} to nbgrader to verify all of the output of the cells when grading answers
+
+As ever, this took longer than I'd anticipated, but I'm mostly there now. There are a few more steps to try:
+
+- trial the {{:https://github.com/akabe/ocaml-jupyter/pull/210}new patch} for using ocaml-jupyter with OCaml 5.x
+- see how to upgrade to notebook v7, as I've stuck with v6 in order to keep the extensions we're using going.

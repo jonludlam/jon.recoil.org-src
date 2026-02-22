@@ -2,12 +2,9 @@
 
 @published 2025-05-01
 
-{%html:
-<figure>
-        <img src="melissa.jpg" alt="Melissa Leach" style="width:80%">
-        <figcaption>Melissa Leach introducing the day</figcaption>
-</figure>
-%}
+{{image!melissa.jpg}Melissa Leach}
+
+{i Melissa Leach introducing the day}
 Today was the "AI for Climate & Nature Community Day" at the {{:https://map.cam.ac.uk/?maplon=0.12032&maplat=52.20354&mapzoom=18&maplayers=Building+Labels%2CExternal+Sites%2CColleges%2CUniversity+Sites%2CBuildings%2CTransport&mapfeature=mfid257%2CBuildings}David Attenborough Building}. A whole bunch of the EEG were either presenting or contributing in some way so I thought I'd come along
 to see what's going on.
 
@@ -16,12 +13,9 @@ to see what's going on.
 
 Following the intro talks from Professors {{:https://www.cambridgeconservation.org/about/people/prof-melissa-leach/}Melissa Leach} and {{:https://www.zoo.cam.ac.uk/directory/bill-sutherland}Bill Sutherland}, the day started with the keynote talk from {{:https://www.biology.ox.ac.uk/people/amy-hinsley}Amy Hinsley}, who, using the specific case of animial trafficking, talked about the need to make AI in conservation equitable, explainable and useful.
 
-{%html:
-<figure>
-        <img src="amy.jpg" alt="Amy Hinsley" style="width:80%">
-        <figcaption>Amy Hinsley delivering the keynote talk</figcaption>
-</figure>
-%}
+{{image!amy.jpg}Amy Hinsley}
+
+{i Amy Hinsley delivering the keynote talk}
 
 We then moved into the first session with {{:https://www.geog.cam.ac.uk/people/lines/}Emily Lines} from the Geography Department who talked about the challenges processing sensor data in the context of forests. Her group has a variety of data collected from forests across Europe, collected from using many different methods, from drones taking pictures of the canopies to ground-based laser scanners producing 3d point clouds. The challenge is then not only to identify individual trees, which is pretty tricky, but also to then distinguish between the leaves of the trees and the wood.
 
@@ -30,12 +24,9 @@ the RSPB on figuring out an optimal way to do some land use adjustments to cut c
 
 We then had {{:https://www.zoo.cam.ac.uk/directory/dr-sam-reynolds}Sam Reynolds} and {{:https://toao.com}Sadiq Jaffer} who talked about their project; using AI to sift through millions of papers looking for those relevant to a specified conservation topic. They're able to directly compare their results with results obtained by manually doing this process, a project that's been going on over the last 20 or so years summing to something like 75 man years of effort. In the end they only missed a few papers that the manual process had found, but actually found many relevant papers that had been missed - and all in only a few days of compute.
 
-{%html:
-<figure>
-        <img src="sadiq.jpg" alt="Sam Reynolds and Sadiq Jaffer" style="width:80%">
-        <figcaption>Sam Reynolds and Sadiq Jaffer sorting millions of papers</figcaption>
-</figure>
-%}
+{{image!sadiq.jpg}Sam Reynolds and Sadiq Jaffer}
+
+{i Sam Reynolds and Sadiq Jaffer sorting millions of papers}
 
 {1 Lightning talks}
 We then had a number of 'lightning talks', with each presenter having only three minutes to talk about their work.
@@ -65,10 +56,6 @@ We then had a number of 'lightning talks', with each presenter having only three
 <figure style="margin:0; width: 100%;">
         <img src="simon.jpg" alt="Simon Thomas" style="max-width: 100%; height: auto;">
         <figcaption>Simon Thomas</figcaption>
-</figure>
-<figure style="margin:0; width: 100%;">
-        <img src="niccolò.jpg" alt="Niccolò Zanotti" style="max-width: 100%; height: auto;">
-        <figcaption>Niccolò Zanotti</figcaption>
 </figure>
 <figure style="margin:0; width: 100%;">
         <img src="simond.jpg" alt="Simon Driscoll" style="max-width: 100%; height: auto;">

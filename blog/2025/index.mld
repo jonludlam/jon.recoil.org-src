@@ -1,18 +1,32 @@
 {0 2025}
 
-@children_order 08/ 07/ 06/ 05/ 04/ 03/
+@children_order 12/ 11/ 09/ 08/ 07/ 06/ 05/ 04/ 03/
 
+- {{!/site/blog/2025/12/page-"claude-and-dune"}Claude and Dune}
+- {{!/site/blog/2025/12/page-"an-svg-is-all-you-need"}An SVG is all you need}
+- {{!/site/blog/2025/11/page-"foundations-of-computer-science"}Foundations of Computer Science}
+- {{!/site/blog/2025/09/page-"caching-opam-solutions2"}Caching opam solutions - part 2}
+- {{!/site/blog/2025/09/page-"odoc-bugs"}Odoc bugs}
+- {{!/site/blog/2025/09/page-"caching-opam-solutions"}Caching opam solutions}
+- {{!/site/blog/2025/09/page-"build-ids-for-day10"}Build IDs for Day10}
+- {{!/site/blog/2025/09/page-"giving-hub-cl-an-upgrade"}Giving hub.cl an upgrade}
 - {{!/site/blog/2025/08/page-"ocaml-lsp-mcp"}Using ocaml-lsp-server via an MCP server}
-- {{!/site/blog/2025/08/page-"ocaml-mcp-server"}An OCaml MCP Server}
-- {{!/site/blog/2025/08/page-"week33"}Week 33}
-- {{!/site/blog/2025/07/page-"retrospective"}Retrospective}
+- {{!/site/blog/2025/08/page-"ocaml-mcp-server"}An OCaml MCP server}
+- {{!/site/blog/2025/08/page-week33}Week 33}
+- {{!/site/blog/2025/07/page-retrospective}4 months in, a retrospective}
 - {{!/site/blog/2025/07/page-"odoc-3-live-on-ocaml-org"}Odoc 3 is live on OCaml.org!}
 - {{!/site/blog/2025/07/page-week28}Week 28}
 - {{!/site/blog/2025/07/page-week27}Weeks 24-27}
-- {{!/site/blog/2025/06/page-"week23"}Week 23}
+- {{!/site/blog/2025/06/page-week23}Week 23}
 - {{!/site/blog/2025/05/page-"docs-progress"}Progress in OCaml docs}
 - {{!/site/blog/2025/05/page-"lots-of-things"}Lots of things have been happening}
 - {{!/site/blog/2025/05/page-"ticks-solved-by-ai"}Solving First-year OCaml exercises with AI}
 - {{!/site/blog/2025/05/page-"oxcaml-gets-closer"}OxCaml is getting closer...}
-- {{!/site/blog/2025/05/page-"ai-for-climate-and-nature-day"}AI focused on Climate and Nature Day}
-- {{!/site/blog/2025/04/page-"ocaml-docs-ci-and-odoc-3"}OCaml Docs CI and Odoc 3}
+- {{!/site/blog/2025/05/page-"ai-for-climate-and-nature-day"}AI for Climate & Nature Community Day}
+- {{!/site/blog/2025/04/page-"ocaml-docs-ci-and-odoc-3"}OCaml-Docs-CI and Odoc 3}
+- {{!/site/blog/2025/04/page-"odoc-3"}Odoc 3: So what?}
+- {{!/site/blog/2025/04/page-"semantic-versioning-is-hard"}Semantic Versioning in OCaml is Hard}
+- {{!/site/blog/2025/04/page-"meeting-the-team"}Meeting the Team}
+- {{!/site/blog/2025/04/page-"this-site"}This site}
+- {{!/site/blog/2025/03/page-"module-type-of"}The Road to Odoc 3: Module Type Of}
+- {{!/site/blog/2025/03/page-"code-block-metadata"}Code block metadata}

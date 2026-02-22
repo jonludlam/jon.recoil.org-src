@@ -1,0 +1,115 @@
+{0 Weeknotes for week 3}
+
+@notanotebook
+@published 2026-01-19
+
+First week back of 2026! Let's write some terse weeknotes.
+
+{1 Projects}
+{2 Dune odoc rules}
+
+Last thing I did last year was to push the new rules for odoc 3. This week, Anil handed me an excellent opportunity to test the 
+rules on the monorepo containing his {{:https://anil.recoil.org/notes/aoah-2025}AOAH} projects. Claude tends to actually write ocamldoc-formatted comments, so this
+is really useful to test the rules. I've {{:https://github.com/jonludlam/dune/tree/odoc-v3-rules-3.21}rebased the commits} on
+the just-released Dune 3.21 and we've been trying them out. There were a few things to fix:
+
+- More careful {{:https://github.com/jonludlam/dune/commit/25158eabf0c3cac2826e16ce590b4bd4d7c09818}dependency tracking} during the compile phase - this particularly affected the [@doc] target, which was pulling
+  in unnecessary dependencies. Most of these dependencies were compiling just fine, but one - Anstrom - is slightly odd in that
+  the opam install of Angstrom installs a META file that references libraries that aren't in the dependencies of its opam package.
+  This is a backward-compatibility hack that was implemented when the Anstrom package was split into several in order to manage
+  the dependencies better.
+- A similar issue happens with eio, where the documentation of the package depends upon [bigstring], which isn't in eio's dependencies.
+  This is entirely intentional - the extra doc dependencies is stated in the opam file with a [x-extra-doc-deps] field. However,
+  [opam install] totally ignores this field (quite reasonably), and so a simple install gives you an opam repo whose docs can't
+  be built. Once again, this broke [dune build @doc] unnecessarily, but the fix was {{:https://github.com/jonludlam/dune/commit/2afe046cf4290d7a83b5f2c5646e3391ca94b630}relatively simple}. The {i real} fix here is to not use [x-extra-doc-deps], but switch to using a {i real} dependency, but marked with [with-doc]
+  and [post] if it would otherwise introduce a circular dependency. That way, an [opam install --with-doc] {i would} install the
+  extra dependency. 
+- Over the Christmas break, {{:https://discuss.ocaml.org/u/tbrk}tbrk} posted {{:https://discuss.ocaml.org/t/odoc-index-for-multiple-packages-inter-package-links-and-local-global-sidebar/17652}on discuss} a question
+  about building docs, for which my dune branch was a partial answer. One feature he was requesting though was the ability to use
+  a custom top-level index. It's a useful feature that's implemented in [odoc_driver] so I've {{:https://github.com/jonludlam/dune/commit/efecdee1b36b7e47906e7c64b7496a1fc7954a2d}added it}.
+- More sensible {{:https://github.com/jonludlam/dune/commit/039eb3d2a3e9d28f8b195905f43839daf5ce8c21}default link scope}. By default, documentation references in the [mli] files of a library can link to any other
+  library in the package. However, by default it wasn't possible to link to the dependencies of another library, unless it happened
+  to be a dependency of your own library. Similarly, the package-wide mld files could only reference the modules in the package's
+  libraries, not to the dependencies. This seems overly cautious, as we can be sure that if we've managed to build the libraries 
+  then their dependencies are installed, and if there are any module name conflicts, we can resolve them via the [/<lib>/Module]
+  syntax.
+- Lastly, implementations of virtual libraries {{:https://github.com/jonludlam/dune/commit/12f9ecbd4888444c2d359049a914ffb4827912f9}need to be skipped} as they've all got the same docs (as they share mli files), and
+  the rules as they were causing Dune to crash with a "Conflicting implementations" error.
+
+I've also rebased the PR onto latest [main], but I've not yet put these patches there, which I'll need to do for the PR to be
+mergable. For now, the 3.21 branch is successfully building the docs for the monorepo.
+
+{2 OCaml Docs CI}
+
+{{:https://github.com/jmid}Jan Midtgaard} noticed over xmas that the Docs CI {{:https://github.com/ocaml/ocaml.org/issues/3437}was broken} and submitted {{:https://github.com/jonludlam/opamh/pull/1}a fix}.
+I've therefore been poking {{:https://github.com/ocurrent/ocaml-docs-ci}ocaml-docs-ci} to get the fix incorporated and into production.
+I almost immediately hit the issue that [odoc_driver] now breaks for the exact same reason. I couldn't
+quite understand how [opam-format] {{:https://github.com/ocaml/opam-repository/pull/28978}had been merged} to [opam-repository] without someone noticing that it had broken [odoc_driver], 
+but it turned out that it {i had} been noticed, but on a {{:https://github.com/ocaml/opam-repository/pull/28877}beta release}.
+The fix to docs ci was to install [odoc_driver] from opam rather than {{:https://github.com/ocurrent/ocaml-docs-ci/blob/81ca17c7b7a2f47ca571b1d6bc866720cebef136/src/lib/config.ml#L226}pinning directly} to a github hash,
+especially if that hash happens to be the hash of the released version!
+
+While I'm working on docs CI, I thought it's probably also a good idea to move over to the [with-doc & post] suggestion from above, so we're ready for
+when packages start to use that. This is now being tested, and hopefully we'll have the CI back up and running early next week.
+
+{2 Better styling for odoc}
+
+I've done very little to the styling of odoc since I took maintainership way back in 2019 or so. It's a bit dated, and there
+are some annoying usability issues, so I thought it's a good opportunity to vibe-code a nice new frontend for it. Rather than
+hack directly on the HTML generator of odoc, this seemed to be a good opportunity to test the JSON output from the new Dune rules,
+so I asked Claude to make me a static site generator that read in the JSON files and spat out some nicely styled HTML. This
+worked like a charm, and the results are {{:https://jon.ludl.am/experiments/vibe-coded-odoc-frontend/}here}. Next steps are to
+see what it would take to get the native odoc output looking more like that.
+
+{2 Custom tags in odoc}
+
+One of the themes of Anil's {{:}AOAH} coding spree was that many libraries were implementations of RFCs. In many places in
+the docs, there are links to relevant sections of the RFCs. It'd be nice in future to be able to validate that we've covered
+all of the parts of the RFCs, so making the links a little more parsable seemed like a good idea. In fact, it seemed that this
+might be a perfect use for custom tags - a feature that was present in ocamldoc that odoc has yet to implement.
+
+{{:https://github.com/art-w}Arthur Wendling} then pointed me at dune's {{:https://dune.readthedocs.io/en/stable/reference/dune/plugin.html}plugin system}, which seemed just the ticket as a way
+to implement this. It's really nice, taking all of the hard work out of creating OCaml plugins, so I've now got
+{{:https://github.com/jonludlam/odoc/tree/extension-plugins}an extension-plugins branch} that implements this. It allows
+you to add support to odoc for tags like [@rfc] which generate custom HTML, markdown or any other backend, can include
+links in their bodies, and can add custom headers to the web page, and custom files to be output by [odoc support-files].
+It looks like this should "just work" and no further changes to the dune rules are needed - though I need to actually
+test this out.
+
+{2 Day10 and docs}
+I've {{!/site/blog/2025/09/page-"build-ids-for-day10"}written about} {{:https://tunbury.org/}Mark's} day10 project
+before. It's a tool to very rapidly build odoc packages mainly in order to test that they build correctly. An obvious
+extension would be to use this to then build the docs for those packages, as the way we do this requires the packages
+to be built first. This would be a replacement for the Docs CI that I talked about above, though there's considerable
+work to do before it's fully-featured enough to be a viable alternative. It seemed like a good time to experiment with
+this though, so I set up one of Anil's {{:https://anil.recoil.org/notes/ocaml-claude-dev}devcontainers}, gave Claude
+some instructions on what to do, took the safety belt off, and let him hack away! Previously most of my interactions
+with Claude had been via the vscode plugin, so using the terminal interface was a bit of a different experience. I'm
+fairly certain though that I'm going to switch everything over to working this way, as letting Claude just get on with
+things without having to OK every step is a far more efficient way to work - especially when you're not that concerned
+with the actual code being produced. This has been mostly a good experience, though Claude does sometimes go off in
+rather odd directions. At one point there was a network error with a dependency while trying to build odoc_driver,
+so it decided that it should have a fallback mechanism that executed odoc directly. I told it {i NEVER} to replace
+functionality in odoc_driver, so it rolled this back, but a few hours later in then did exactly the same thing again.
+
+{2 Misc other stuff}
+A few other things too - {{:https://github.com/jonludlam/odoc/commit/59037341cd53d8734a5874f7af2b728b5be70035}improving the [--warn-error] logic in odoc},
+and one of its {{:https://github.com/jonludlam/odoc/commit/9d18feff5eda543652c6749062750de6e5bb4d6e}error messages},
+improving the build of this website so I can iterate on it more quickly, fixing up some of my self-hosted services
+like my tangled knot, and other bits and bobs.
+
+{1 Reflections}
+
+I think the most important thing this week has been the slightly eye-opening benefits of using Claude
+outside of the context of VSCode. I suspect I'll be doing much more of my work this way in future. There's
+also a good chance I'll have to upgrade my subscription from the $100-per-month to the $200 one...
+
+{1 Next week}
+
+- Start of term tutorial meetings
+- Sherldoc in monopam-myspace
+- Get ocaml-docs-ci deployed and working
+- Update the Dune PR
+- Integrate the custom-tags and website generator into monopam-myspace
+- Unleash Claude on my js-top-worker repo
+

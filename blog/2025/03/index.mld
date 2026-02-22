@@ -1,3 +1,4 @@
 {0 March}
 
-@children_order code-block-metadata module-type-of
+@children_order module-type-of code-block-metadata
+

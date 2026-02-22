@@ -49,8 +49,7 @@ comparisons to sort an input of {m n} items.  It is straightforward to prove
 that this complexity is the best possible.  There
 are {m n!} permutations of {m n} elements and each comparison distinguishes two
 permutations.  The lower bound on the number of comparisons, {m C(n)}, is
-obtained by solving {m 2^\{C(n)\}\geq n!}; therefore {m C(n)\geq \log(n!)\approx
-n\log n-1.44n}.
+obtained by solving {m 2^\{C(n)\}\geq n!}; therefore {m C(n)\geq \log(n!)\approx n\log n-1.44n}.
 
 In order to compare the sorting algorithms, we use the {{: http://www.firstpr.com.au/dsp/rand31/p1192-park.pdf} following source} of
 pseudo-random numbers. Never mind how this works: generating

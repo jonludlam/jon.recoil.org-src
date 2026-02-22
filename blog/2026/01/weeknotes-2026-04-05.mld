@@ -1,0 +1,160 @@
+{0 Weeknotes for weeks 4-5}
+
+@notanotebook
+@published 2026-01-30
+@libs odoc.extension_api
+@packages odoc-admonition-extension odoc-rfc-extension odoc-msc-extension odoc-mermaid-extension odoc-dot-extension
+
+I've been battling the seasonal illnesses this week, so I've combined two weeknotes into one. Fortunately the 'flu
+doesn't hold Claude back! 
+
+Probably the most interesting part of this is the {!retrospective}, so make sure to read that bit.
+
+{1 The Last Two Weeks}
+
+As is becoming more and more apparent, the {e breadth} of what I'm working on is ever expanding, powered by
+agentic AI. It's become so much more (cognitively) cheaper to have an idea and set an agent off investigating it
+that I've been finding that I'm working in parallel on far more things in a single week than I would have
+even six months ago. Here are some of the bigger headings though.
+
+{2 Monorepo excitement}
+
+We're currently experimenting with a new tool - {{:https://tangled.org/anil.recoil.org/monopam}monopam} to help develop across multiple OCaml libraries
+by using git subtrees to create a monorepo with all of the packages in. We then extract patches to the individual
+repos to push upstream. I've been moving my development workflow from in-vscode-claude with careful permissions checking
+to running claude with `--dangerously-skip-permissions` in a container with the monorepo checked out. This has been
+a bit of a bumpy ride, with the tool evolving daily, but I'm very much seeing the benefits of letting Claude just get
+on with things, given a strict enough early design and testing strategy, and using Anil's method of creating the interfaces
+first. 
+
+{3 Odoc}
+
+I also did quite a bit related to odoc these 2 weeks, split over improving functionality and bugfixing.
+
+{4 Plugins}
+
+Getting Claude to run with all of the monorepo libraries implicitly requires that they're well documented, as looking at the
+source to figure out how to use them exhausts the context window pretty rapidly. Odoc's main focus has been on getting
+the expansions and referencing correct, and while we've made progress on the actual content markup, introducing
+{{:https://ocaml.github.io/odoc/odoc/odoc_for_authors.html#media}media tags} for example, there's still a good distance to go.
+
+Using the plugins mechanism I {{!/site/blog/2026/01/page-"weeknotes-2026-03"}wrote about last week},
+I've made a plugin interface for odoc and implemented a few plugins. Initially I was just going to support 'custom tags'
+but it occurred to me that rendering code blocks could also be done in this way. So I've made a few. Two custom tag plugins:
+
+- {{!/odoc-admonition-extension/page-index}odoc-admonition-extension} - styled callout blocks for notes, warnings, tips. Note that
+we are intending to make this more first-class - there's a {{:https://hackmd.io/ETSOAmetTI-E3vrDk3Bfrw}design out there}. This
+was just a convenient way to test the feature!
+- {{!/odoc-rfc-extension/page-index}odoc-rfc-extension} - links to IETF RFC documents
+
+and 3 code block plugins:
+
+- {{!/odoc-msc-extension/page-index}odoc-msc-extension} - Message Sequence Charts
+- {{!/odoc-mermaid-extension/page-index}odoc-mermaid-extension} - Mermaid diagrams (flowcharts, sequence diagrams, etc.)
+- {{!/odoc-dot-extension/page-index}odoc-dot-extension} - Graphviz/DOT diagrams
+
+The module signatures relevant to the plugins are documented in {!/odoc.extension_api/Odoc_extension_api} and the
+plugins each have to implement an interface described in {!Odoc_extension_api.Code_Block_Extension} or {!Odoc_extension_api.Extension} for
+custom tags.
+
+{4 Bugfixing}
+
+{{:https://github.com/lukemaurer}Luke Maurer} at Jane Street pointed out that they're still suffering from
+yet another repro of {{:https://github.com/ocaml/odoc/issues/930}issue 930} at Jane Street. I'd worked on this
+{{!/site/blog/2025/09/page-"odoc-bugs"}back in September} but turns out I hadn't actually made a PR, so I tidied
+up the branch and {{:https://github.com/ocaml/odoc/pull/1400}made a PR}.
+
+{2 Docs CI}
+Docs CI has been fixed and is even now rebuilding all of the docs for
+ocaml.org. I've added in the {{:https://github.com/ocurrent/ocaml-docs-ci/commit/c6231fa383820b4c700aaa1e72107536b1872112}handling of `post & with-doc`} in place of
+x-extra-doc-deps, so we should be able to use either mechanism now. The
+idea is to deprecate x-extra-doc-deps soon though. Somehow despite
+an explicit button to press to update the epoch symlinks, it got updated
+anyway and broke most of the docs on ocaml.org. Fortunately {{:https://discuss.ocaml.org/t/is-caqti-doc-missing/17741/5}someone noticed}
+and posted on discuss and so I switched it back.
+
+Unfortunately, it seemed to be taking a long time to build the docs - at time of writing it's now Friday, and the CI jobs have been running since Tuesday.
+In that time, it's only managed to build about 6500 packages, a long way short of the 16,000 or so that I expect a full build will produce.
+Looking through the logs, it seems that some change to opam is causing it to sometime rebuild the entire opam universe when it should only be building 1 package.
+For example, in a job that should be building just `tezos-protocol-004-Pt24m4xi`, it installs all of the prebuilt dependencies, then 
+runs `opamh` to try to convince opam that everything is all set up to just run the build step for the package we want. Unfortunately
+the logs show the following:
+
+{[
+The following actions will be performed:
+=== recompile 178 packages
+  - recompile aches                            1.1.0              [uses ocaml]
+  - recompile aches-lwt                        1.1.0              [uses ocaml]
+...
+  - recompile mtime                            2.1.0              [uses ocaml]
+  - recompile ocaml                            4.14.2             [upstream or system changes]
+  - recompile ocaml-compiler-libs              v0.12.4            [uses ocaml]
+...
+]}
+
+where it seems opam has decided that something has changed enough for it to want to recompile the `ocaml` package, and therefore
+{i everything} in the entire opam switch! So this job took 12 minutes instead of 21 seconds, which was the time required to finally
+build the `tezos-protocol` package.
+
+{2 Day10 and docs}
+In closely related news, {{:https://tunbury.org/}mtelver's} day10 project looked precisely the right shape for building docs -
+in fact it shares its architecture and some components with the docs CI. So I asked Claude to take a look and see what it would
+take, and discovered that it doesn't take very much! We have a Really Big Machine here at the CL that was temporarily underused;
+and by Really Big I mean 768 cores and 3TB of RAM. So, how long could building all of the docs for all of the packages possibly
+take? Well, it takes 5 hours 40 mins. And I was only using roughly a third of the machine. Nice!
+
+So should I push on with fixing ocaml-docs-ci and figure out why it's rebuilding everything all the time? Or should I forge ahead
+with day10 and turn it into a proper CI system as opposed to a slightly flakey bespoke thing I have to handhold through a build?
+This is next week's problem.
+
+{2 JS toplevels}
+
+Something I keep coming back to is javascript toplevels. I'd really like to be able to be able to host JS toplevels on ocaml.org
+for each different version of each different package. This is something I've worked on on-and-off for a long time now, and
+several fixes to help have been merged to various projects along the way. The tricky thing is to not put a massive load onto
+ocaml.org with this, so we need to be efficient. That means firstly having a single toplevel js file with all of the logic in
+but none of the libraries, and then dynamically loading libraries as we need them. Also we can save some bandwidth by not
+immediately sending all of the cmi files, as these can be faulted in as necessary too. So once again I've got Claude on the task,
+and things are honestly looking pretty hopeful now. I've got 2 demos:
+
+- {{:https://jon.ludl.am/experiments/findlibish/}Dynamic library loading}
+- {{:https://jon.ludl.am/experiments/multi-universe-demo/}Multi-version support}
+
+In both cases, make sure you take a look at the network tab to see it dynamically loading only what it needs. 
+
+{1 Retrospective}
+
+{2 Autonomous Claude}
+The power of sending Claude off to do some work can be immense. However, it does mean investing time up front telling it
+precisely what problem you're trying to solve, what approach to take, finer details on how you want it done, and
+how you can tell if it's working when it finishes. A 'failure mode' I've been experiencing is when I end up in a long, drawn out
+real time interaction, especially if that's happening with 2 projects simultaneously - and by 'failure' I really mean just
+'slow'. Ideally what would be going on is for all of my agents to be getting on with whatever task they've been allocated
+without bothering me for more details. For Claude to have to ask me a question has much more latency involved than it just
+getting on with things, especially if I don't notice it immediately. 
+
+{2 When to Stop}
+The 'finishing criteria' are important - many times this week I've had Claude tell me it's finished something, having
+verified that it's passing all the tests, only for me to take a look to find that it's very obviously broken. As quite a
+few things recently have involved the web, I've
+put Playwright into all of my devcontainers, and told Claude to use it to verify things are working. This has been working
+pretty well, so I'll be adding it to my prompts. It's not too dissimilar to what we used to call 'pre-flight checks'
+back in the Citrix days.
+
+{2 Containers vs accounts}
+I've been running everything with `--dangerously-ignore-permissions` in containers, and while the outcome is amazing,
+the containers bit has been a bit of a headache. Next week I'll be trialling the idea of just giving the agents their
+own account (non-admin!) on my servers, their own github account, tangled account and so on, and just treating them
+more like I would if I had a real colleague. It's always slightly alarming to see my own name on the output of the
+bots, assigning me (or sometimes someone else (!!)) copyright over code I've never seen. This is, of course, a whole
+other pandora's box that I really don't want to open right now - but I think the point is that I'll feel a lot more
+comfortable if the commits are all by `Jon's Agent <jon+claude@recoil.org>` rather than by me!
+
+{2 Deciding next steps}
+The question of whether I should fix up ocaml-docs-ci or improve the day10 solution requires a bit of thought. In
+fact, it requires a bit of a gap analysis between the two. This isn't something I've asked Claude to do before, 
+so I'll try that and see how it turns out. I'll be asking it to be "scientific" in its approach, coming up with
+hypotheses and verifying them - for which I think I'll need to give it a platform on which it can perform experiments.
+This is a bit trickier with ocaml-docs-ci than day10 as day10 runs entirely on any given linux computer, whereas
+ocaml-docs-ci needs ocurrent workers and a routable ssh server. I'll report on the outcome of this next week!
+
