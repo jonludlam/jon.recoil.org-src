@@ -1,0 +1,53 @@
+{0 Weeknotes weeks 7-8}
+
+@notanotebook
+@published 2026-02-24
+
+A combination one again as I took some time off due to school half term.
+
+{1 Finished off my exam questions}
+This was a lot of fun! Obviously I can't talk about it, but while it was stressful and worrying and anxiety inducing and scary,
+it was also engaging and interesting and thought-provoking. Having some ideas come together to make a nice coherent whole was
+very cool.
+
+{1 Testing LLMs on past paper questions}
+Similar to our work on the ticks that {{:https://www.youtube.com/watch?v=Ub8k1BcSRLQ}Sadiq, I and others did last year}, I wanted to try to see how well LLMs could answer tripos questions.
+Partly I wanted to do this so I could check that my own questions were of the right sort of level, and partly it was just a
+displacement activity while I wasn't making progress on the actual exam questions! I've not done a useful analysis of the
+results yet, but seemed in line with our experience with the ticks, though the pass rate was lower for the same models (qwen).
+
+{1 Claude from a sunbed}
+I went away for a vitamin-D boosting bit of sun. Before I went, I got Claude to spin me up a little Telegram bridge so that I could tell it what to do,
+while it's still running in safeties-off mode on my sacrificial VM. This was kind of fun - I got to just indulge thoughts as they came to me, and
+off it would go and do stuff. It was a bit limited in how it talked back to me, which wasn't by design but turned out to be nice for this sort of
+workflow. The downside is that I've now got a load of stuff to sift through - much of which is a 'good start', but none of it is likely to be usable
+without a good deal more effort. Here's a short-list of things I had it do:
+
+- Resurrect Fay Carson's work on the {{:https://github.com/ocaml/odoc/pull/1295}Menhir parser for odoc}, pushed {{:https://github.com/jonludlam/odoc/tree/menhir-parser-rebased}here}
+- Added some instrumentation to Odoc to do some performance experiments
+- Ran some simple experiments to measure the impact of various pre-existing performance knobs/switches
+- Resurrected an old patch of mine to {{:https://github.com/jonludlam/odoc/tree/parameterised-paths}unify the two path representations} in odoc to measure its effect on performance.
+- Tested aggresively reuse of records if their fields don't change during compile/link
+- Mixed up the {{:https://tangled.org/jon.recoil.org/odoc-scrollycode-extension}scrollycode backend} and the x-ocaml backend and stuck a playground on at each step
+- Unified the oxcaml/ocaml branches of {{:https://tangled.org/jon.recoil.org/js_top_worker}js_top_worker} and x-ocaml via cppo
+- Added oxcaml mode/layout annotations to odoc
+
+{1 OxCaml}
+I investigated the oxcaml docs build, which I had got working last week. Anil reported that it wasn't working for him, so I looked at the
+build I had and it definitely {i was} working. However, I was building on our machine Monteverde, which is a bit of a beast, so I checked the
+memory usage and it was enormous! I tried the build again on my 64 gig VM and it OOM'd. I'd noticed before that the [cmti] files for
+base, in particular [base__Container.cmti] were absolutely massive, and so had just assumed that the problem was that. Luke had also
+mentioned that some of the output from the template machinery was hidden. However, I had Claude look into this and it couldn't see any
+doc stop comments. So I asked it to look a little closer and figure out what was using all the memory. It took an unexpectedly large number
+of prods from me to finally figure out what was going on - it was to do with how odoc processes [includes] - specifically an [include sig ... end].
+Essentially an include of that type ends up doubling the storage required of the signature. As the ppx_template extension does quite a lot
+of this, and in particular nests them, this ends up going exponential and this turned out to be the cause of most of the memory usage. 
+With a fair bit more prodding by me, Claude and I eventually got to a solution, which I'll be upstreaming soon - the fix applies to OCaml as
+well as OxCaml, but it's this particularly pathalogical usage of includes that ppx_template uses where it'll make the most difference.
+
+{1 Odoc, plugins, JS and more}
+Teaser... I have a blog post coming soon with more on this. It's been a lot of fun, and
+should provide a decent inspiration for a roadmap for Odoc and online notebooks!
+
+
+

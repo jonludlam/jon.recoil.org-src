@@ -1,0 +1,29 @@
+{0 Weeknotes 2026 week 9}
+
+@published 2026-03-02
+@notanotebook
+
+Let's make this really terse!
+
+{1 What did I do?}
+- Got docs working with github actions on Anil's oxmono monorepo. Results are {{:https://jonludlam.github.io/oxmono/}here}.
+  This includes experimental support for oxcaml modes/layouts.
+- Got markdown mode output into Sherlodoc's db so you can query it - great for agents!
+  {image!./search.png}
+- Widgets in the JS OCaml toplevels - using FRP for the interactions. The neat thing here is that using FRP via
+  Daniel Bunzli's {{:}note} library is that all the interactions are all purely functional, no refs or mutables
+  in sight. You provide a little wrapper scripts that's run in the frontend and the interactions and send back and
+  forth with the worker running the code where it's translated into Events and Signals. My proof-of-concept of this
+  is a widget that works with the {{:https://leafletjs.com/}leaflet.js} library:
+  {video!mapdemo.mov}
+  Demo coming soon!
+- Consolidating all of the Odoc toplevel bits and pieces into the one monorepo. Again, demo of this coming soon!
+
+{1 What am I going to do?}
+- New website!
+- Odoc plugins showcase
+- Writing writing writing writing
+
+
+
+
